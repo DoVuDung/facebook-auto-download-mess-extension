@@ -50,27 +50,35 @@ async function checkCurrentPage() {
       return false;
     }
     
-    showStatus('Ready to export this conversation!', 'success');
+    showStatus('Ready to export messages!', 'success');
     startExportBtn.disabled = false;
     return true;
-    
   } catch (error) {
-    showStatus('Error checking page', 'error');
+    showStatus('Error checking page: ' + error.message, 'error');
     startExportBtn.disabled = true;
     return false;
   }
 }
 
+// Reset UI state
+function resetUI() {
+  isExporting = false;
+  startExportBtn.style.display = 'block';
+  startExportBtn.disabled = false;
+  stopExportBtn.style.display = 'none';
+  progressDiv.style.display = 'none';
+  updateProgress(0);
+}
+
 // Start export process
 async function startExport() {
-  if (isExporting) return;
+  if (!currentTab || isExporting) return;
   
   isExporting = true;
   startExportBtn.style.display = 'none';
   stopExportBtn.style.display = 'block';
   progressDiv.style.display = 'block';
-  
-  showStatus('🚀 Starting export...', 'info');
+  showStatus('Starting export...', 'info');
   
   const settings = {
     includeDates: includeDatesCheckbox.checked,
@@ -98,378 +106,706 @@ function stopExport() {
   showStatus('Export stopped', 'info');
 }
 
-// Reset UI to initial state
-function resetUI() {
-  isExporting = false;
-  startExportBtn.style.display = 'block';
-  stopExportBtn.style.display = 'none';
-  progressDiv.style.display = 'none';
-  updateProgress(0);
-}
-
 // This function will be injected into the page
 function exportMessages(settings) {
   return new Promise((resolve, reject) => {
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     const messages = [];
-    let batchCount = 0;
     let totalMessages = 0;
-    const maxBatches = 300; // Safety limit - can extract more messages
     
-    console.log('Starting Messenger extraction with requirements:');
-    console.log('1. Scroll backwards through chat');
-    console.log('2. Extract each message to plain text');
-    console.log('3. Include sender name at start of each line');
-    console.log('4. Include date headers like "Jul 11, 2025, 5:35 PM"');
-    console.log('5. Clear DOM to prevent memory leaks');
+    console.log('Starting SIMPLE text-only Messenger extraction for single conversation...');
+    console.log('Will extract: sender and message text content only');
+    console.log('Settings:', settings);
     
     // Send progress updates back to popup
-    function updateProgress(batch, total) {
-      const percent = Math.min((batch / maxBatches) * 100, 100);
+    function updateProgress(percent, current) {
       chrome.runtime.sendMessage({
         type: 'progress',
-        batch: batch,
-        total: total,
-        percent: percent
+        percent: percent,
+        current: current,
+        total: totalMessages
       });
     }
-    
-    // Enhanced message extraction with better selectors
+
+    // Simple message extraction for text content only with enhanced filtering and deduplication
     function extractMessagesFromDOM() {
       const foundItems = [];
+      const processedElements = new Set(); // Track processed elements to avoid duplicates
       
-      console.log('Starting message extraction...');
-      console.log('Current URL:', window.location.href);
-      console.log('Page title:', document.title);
+      console.log('Starting SIMPLE text-only message extraction with enhanced filtering...');
       
-      // First scroll to very top to ensure we get everything
-      window.scrollTo(0, 0);
-      
-      // SUPER AGGRESSIVE: Let's find ANY possible container
-      console.log('PHASE 1: Checking all possible containers...');
-      const allPossibleContainers = [];
-      
-      // Standard selectors
-      const standardSelectors = [
+      // Find message containers
+      const containerSelectors = [
         '[aria-label="Message list"]',
         '[aria-label="Messages"]', 
         '[role="log"]',
-        '[data-testid="conversation-viewer"]',
-        '[data-testid="message-container"]',
-        'div[style*="overflow"]',
-        '[data-pagelet="MessengerDotCom"]',
-        '[data-pagelet*="messenger"]',
-        '[data-pagelet*="chat"]'
+        '[data-testid="conversation-viewer"]'
       ];
       
-      for (const selector of standardSelectors) {
-        const el = document.querySelector(selector);
-        if (el) {
-          allPossibleContainers.push({element: el, source: `Standard: ${selector}`});
-          console.log(`Found container via: ${selector}`);
+      let container = null;
+      for (const selector of containerSelectors) {
+        container = document.querySelector(selector);
+        if (container) {
+          console.log(`Found container with: ${selector}`);
+          break;
         }
       }
       
-      // Aggressive fallback: any div with many child divs
-      const allDivs = document.querySelectorAll('div');
-      console.log(`PHASE 2: Checking ${allDivs.length} divs for message patterns...`);
-      
-      for (const div of allDivs) {
-        const childDivs = div.querySelectorAll('div[dir="auto"], [role="row"]');
-        if (childDivs.length > 10) {
-          allPossibleContainers.push({element: div, source: `Fallback: div with ${childDivs.length} children`});
-          console.log(`Found potential container: div with ${childDivs.length} message-like children`);
+      if (!container) {
+        // Fallback: look for div with many role="row" elements
+        const allDivs = document.querySelectorAll('div');
+        for (const div of allDivs) {
+          const roleRows = div.querySelectorAll('[role="row"]');
+          if (roleRows.length > 10) {
+            container = div;
+            console.log(`Found container with ${roleRows.length} role="row" elements`);
+            break;
+          }
         }
       }
       
-      const messageContainers = allPossibleContainers.map(c => c.element).filter(Boolean);
-      
-      console.log(`Found ${messageContainers.length} potential message containers`);
-      console.log('Container details:', allPossibleContainers.map(c => c.source));
-      
-      if (messageContainers.length === 0) {
-        console.error('COMPLETE FAILURE: No message container found!');
-        console.error('Debug info:');
-        console.error('- Total divs on page:', document.querySelectorAll('div').length);
-        console.error('- Divs with dir="auto":', document.querySelectorAll('div[dir="auto"]').length);
-        console.error('- Elements with role="row":', document.querySelectorAll('[role="row"]').length);
-        console.error('- Elements with aria-label containing "message":', document.querySelectorAll('[aria-label*="message" i]').length);
-        console.error('PLEASE COPY THIS DEBUG INFO TO HELP FIX THE ISSUE!');
-        chrome.runtime.sendMessage({
-          type: 'error',
-          error: 'No message container found. Please copy the console debug info and share it.'
-        });
+      if (!container) {
+        console.error('No message container found!');
         return [];
       }
       
-      const container = messageContainers[0];
-      console.log('Using container:', container.getAttribute('aria-label') || container.className || 'unnamed container');
+      // Get all potential message elements
+      const messageElements = container.querySelectorAll('div[role="row"]');
+      console.log(`Processing ${messageElements.length} message elements for text content...`);
       
-      // UPDATED: More comprehensive message element detection
-      const messageSelectors = [
-        'div[role="row"]',
-        'div[data-testid*="message"]',
-        'div[aria-describedby]',
-        'div[dir="auto"]',
-        '[data-testid="message_bubble"]',
-        '[data-testid="message-container"]',
-        // Look for elements that contain text and have sender info
-        'div:has(strong):has(span)',
-        'div:has(h4):has(div[dir="auto"])',
-        'div:has(h5):has(div[dir="auto"])'
-      ];
-      
-      let messageElements = [];
-      for (const selector of messageSelectors) {
+      // Process each message element for text content only
+      for (let i = 0; i < messageElements.length; i++) {
+        const element = messageElements[i];
+        
+        // Create unique identifier for this element to prevent duplicates
+        const elementId = element.outerHTML.substring(0, 200) + '_' + i;
+        
+        if (processedElements.has(elementId)) {
+          continue; // Skip already processed elements
+        }
+        
+        // Skip elements that look like system messages or UI elements
+        const elementText = element.textContent?.trim() || '';
+        if (elementText.includes('conversation settings') ||
+            elementText.includes('group settings') ||
+            elementText.includes('Add people') ||
+            elementText.includes('Create group') ||
+            elementText.includes('Search in conversation') ||
+            elementText.includes('Call') ||
+            elementText.includes('Video chat') ||
+            elementText.length === 0) {
+          continue;
+        }
+        
         try {
-          const elements = container.querySelectorAll(selector);
-          if (elements.length > messageElements.length) {
-            messageElements = Array.from(elements);
-            console.log(`Using selector "${selector}" found ${elements.length} elements`);
+          const messageData = extractTextContent(element, i);
+          if (messageData && messageData.content) {
+            // Enhanced duplicate detection - check multiple criteria
+            const isDuplicate = foundItems.some(item => {
+              // Exact content match
+              if (item.content === messageData.content && item.sender === messageData.sender) {
+                return true;
+              }
+              
+              // Similar content match (for slight variations)
+              if (item.sender === messageData.sender && 
+                  item.content.length > 10 && 
+                  messageData.content.length > 10) {
+                
+                const similarity = calculateSimilarity(item.content, messageData.content);
+                if (similarity > 0.9) { // 90% similar
+                  return true;
+                }
+              }
+              
+              return false;
+            });
+            
+            if (!isDuplicate) {
+              foundItems.push(messageData);
+              processedElements.add(elementId);
+            } else {
+              console.log(`Skipped duplicate: ${messageData.sender} - ${messageData.content.substring(0, 30)}...`);
+            }
+          }
+        } catch (error) {
+          console.warn(`Error processing message ${i + 1}:`, error);
+        }
+      }
+      
+      console.log(`Found ${foundItems.length} unique messages after deduplication`);
+      return foundItems;
+    }
+    
+    // Helper function to calculate text similarity
+    function calculateSimilarity(text1, text2) {
+      const words1 = text1.toLowerCase().split(/\s+/);
+      const words2 = text2.toLowerCase().split(/\s+/);
+      
+      const set1 = new Set(words1);
+      const set2 = new Set(words2);
+      
+      const intersection = new Set([...set1].filter(x => set2.has(x)));
+      const union = new Set([...set1, ...set2]);
+      
+      return intersection.size / union.size;
+    }
+
+    // SIMPLE: Extract only text content and basic sender info
+    function extractTextContent(element, index) {
+      const fullText = element.textContent?.trim() || '';
+      
+      // Skip completely empty elements
+      if (!fullText) {
+        return null;
+      }
+      
+      // === DATE HEADER DETECTION ===
+      const isDateElement = fullText.match(/\w{3}\s+\d{1,2},?\s+\d{4}.*\d{1,2}:\d{2}\s*(AM|PM)|Today|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday/i);
+      
+      if (isDateElement && fullText.length < 100) {
+        return {
+          type: 'date',
+          content: fullText,
+          index: index
+        };
+      }
+      
+      // === IMPROVED SENDER IDENTIFICATION WITH BETTER FILTERING ===
+      const rect = element.getBoundingClientRect();
+      const isRightAligned = rect.right > window.innerWidth * 0.6;
+      const isLeftAligned = rect.left < window.innerWidth * 0.4;
+      
+      let sender = 'UNKNOWN';
+      let foundExplicitSender = false;
+      
+      // Method 1: Look for explicit sender name in message element with better validation
+      const senderElements = element.querySelectorAll('span[dir="auto"] strong, h4, h5, [aria-label*="sent by"], span[data-testid*="message_sender"]');
+      for (const senderEl of senderElements) {
+        let senderText = senderEl.textContent?.trim();
+        if (senderText) {
+          // Clean the sender text more thoroughly
+          senderText = senderText.replace(/\s*:.*$/g, ''); // Remove colon and after
+          senderText = senderText.replace(/\s*\(.*?\)\s*/g, ''); // Remove parentheses
+          senderText = senderText.replace(/\s*\[.*?\]\s*/g, ''); // Remove brackets
+          senderText = senderText.replace(/\s*\{.*?\}\s*/g, ''); // Remove braces
+          senderText = senderText.trim();
+          
+          // Enhanced validation for sender name
+          if (senderText && 
+              senderText.length >= 2 && // At least 2 characters
+              senderText.length <= 100 && // Not too long
+              !senderText.includes('•') && 
+              !senderText.includes(':') &&
+              !senderText.includes('...') &&
+              !senderText.match(/^\d+$/) && // Not just numbers
+              !senderText.match(/^[0-9\s]+$/) && // Not just numbers and spaces
+              !senderText.match(/AM|PM/i) &&
+              !senderText.match(/\d{1,2}:\d{2}/) && // Not a timestamp
+              !senderText.includes('Active') &&
+              !senderText.includes('ago') &&
+              !senderText.includes('min') &&
+              !senderText.includes('hour') &&
+              !senderText.includes('day') &&
+              !senderText.includes('week') &&
+              !senderText.includes('Online') &&
+              !senderText.includes('Offline') &&
+              !senderText.includes('Typing') &&
+              !senderText.includes('Seen') &&
+              !senderText.includes('Delivered') &&
+              !senderText.includes('Sent') &&
+              !senderText.toLowerCase().includes('you') &&
+              !senderText.toLowerCase().includes('me') &&
+              !senderText.toLowerCase().includes('myself') &&
+              !senderText.toLowerCase().includes('enter') &&
+              !senderText.toLowerCase().includes('press') &&
+              !senderText.toLowerCase().includes('type') &&
+              !/^[^\w]/.test(senderText) && // Doesn't start with special character
+              /[a-zA-Z]/.test(senderText)) { // Contains at least one letter
+            
+            sender = senderText.toUpperCase();
+            foundExplicitSender = true;
+            console.log(`Found explicit sender: "${sender}" from element: "${senderEl.textContent}"`);
             break;
           }
-        } catch (e) {
-          console.warn(`Selector failed: ${selector}`, e);
         }
       }
       
-      // Fallback: if no specific selectors work, get all divs and filter
-      if (messageElements.length === 0) {
-        console.log('Fallback: searching all divs for message patterns...');
-        messageElements = Array.from(container.querySelectorAll('div')).filter(div => {
-          const text = div.textContent?.trim();
-          const hasStrongElement = div.querySelector('strong, h3, h4, h5');
-          const hasTextContent = text && text.length > 10 && text.length < 1000;
-          return hasStrongElement && hasTextContent;
-        });
+      // Method 2: Position-based detection if no explicit sender found
+      if (!foundExplicitSender || sender === 'UNKNOWN') {
+        if (isRightAligned) {
+          sender = 'YOU';
+        } else if (isLeftAligned) {
+          const partnerName = getConversationPartnerName();
+          sender = partnerName ? partnerName.toUpperCase() : 'OTHER PERSON';
+        }
       }
       
-      console.log(`Processing ${messageElements.length} potential message elements`);
+      // === TEXT CONTENT EXTRACTION WITH BETTER FILTERING ===
+      const dirAutoElements = element.querySelectorAll('div[dir="auto"], span[dir="auto"]');
+      const textContents = [];
+      const seenTexts = new Set(); // Track seen text to avoid duplicates within same message
       
-      for (const element of messageElements) {
-        try {
-          // UPDATED: Better date detection
-          const dateSelectors = [
-            'div[aria-label][tabindex]',
-            'div[role="heading"]', 
-            'div[aria-hidden="true"]',
-            'span[aria-hidden="true"]',
-            'div[data-testid*="timestamp"]',
-            'div[data-testid*="date"]'
-          ];
-          
-          for (const selector of dateSelectors) {
-            const dateElement = element.querySelector(selector);
-            if (dateElement) {
-              const dateText = dateElement.textContent.trim();
-              // Enhanced date pattern matching
-              if (dateText.match(/\w{3}\s+\d{1,2},?\s+\d{4}.*\d{1,2}:\d{2}\s*(AM|PM)|Today|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2}/i)) {
-                foundItems.push({
-                  type: 'date',
-                  content: dateText,
-                  element: element
-                });
-                continue;
-              }
-            }
-          }
-          
-          // UPDATED: More comprehensive sender and message detection
-          const senderSelectors = [
-            'h4 strong', 'h5 strong', 'h3 strong', 'h2 strong',
-            'strong[dir="auto"]', 'strong',
-            'span[dir="auto"] strong',
-            'div[dir="auto"] strong',
-            '[data-testid*="sender"]',
-            '[data-testid*="name"]'
-          ];
-          
-          const messageSelectors = [
-            'div[dir="auto"]:not([aria-hidden])',
-            'span[dir="auto"]',
-            '[data-testid="message_text"]',
-            '[data-testid*="message"]',
-            'div[data-testid*="text"]',
-            // Look for any element with substantial text content
-            'div:not(:has(strong)):not(:has(h1,h2,h3,h4,h5))'
-          ];
-          
-          let senderEl = null;
-          let msgEl = null;
-          
-          // Find sender with more flexible approach
-          for (const selector of senderSelectors) {
-            senderEl = element.querySelector(selector);
-            if (senderEl && senderEl.textContent.trim() && senderEl.textContent.trim().length < 50) {
-              break;
-            }
-          }
-          
-          // Find message with more flexible approach  
-          for (const selector of messageSelectors) {
-            const candidates = element.querySelectorAll(selector);
-            for (const candidate of candidates) {
-              const text = candidate.textContent.trim();
-              // Good message: has text, not too short, not too long, not same as sender
-              if (text && text.length > 1 && text.length < 2000 && 
-                  (!senderEl || text !== senderEl.textContent.trim())) {
-                msgEl = candidate;
-                break;
-              }
-            }
-            if (msgEl) break;
-          }
-          
-          if (senderEl && msgEl) {
-            const senderName = senderEl.textContent.trim();
-            const messageContent = msgEl.textContent.trim();
+      for (const dirEl of dirAutoElements) {
+        let text = dirEl.textContent?.trim();
+        if (text && text.length > 0) {
+          // Enhanced filtering for UI elements, sender names, timestamps, and system messages
+          if (!text.match(/^\d{1,2}:\d{2}/) && 
+              !text.includes('•') && 
+              text !== sender &&
+              text !== sender.toLowerCase() &&
+              !text.match(/AM|PM$/i) &&
+              !text.match(/\d{1,2}:\d{2}\s*(AM|PM)/i) &&
+              text !== 'Enter' &&
+              text !== 'Press Enter to send' &&
+              !text.includes('Enter to send') &&
+              !text.includes('Type a message') &&
+              !text.includes('Aa') &&
+              !text.includes('Active') &&
+              !text.includes('ago') &&
+              !text.includes('Online') &&
+              !text.includes('Offline') &&
+              !text.includes('Typing') &&
+              !text.includes('min') &&
+              !text.includes('hour') &&
+              !text.includes('day') &&
+              !text.includes('week') &&
+              !text.includes('Seen') &&
+              !text.includes('Delivered') &&
+              !text.includes('Sent') &&
+              !text.toLowerCase().includes('react') &&
+              !text.toLowerCase().includes('reply') &&
+              !text.toLowerCase().includes('forward') &&
+              !text.toLowerCase().includes('delete') &&
+              !text.toLowerCase().includes('more') &&
+              !text.toLowerCase().includes('options') &&
+              text.length > 0 &&
+              text.length < 5000 && // Reasonable message length
+              !seenTexts.has(text)) { // Avoid duplicate text within same message
             
-            // Validate we have good content
-            if (senderName && messageContent && 
-                messageContent.length > 1 && 
-                senderName.length < 100 && 
-                messageContent !== senderName) {
-              foundItems.push({
-                type: 'message',
-                sender: senderName,
-                content: messageContent,
-                element: element
-              });
-              console.log(`Found message: ${senderName}: ${messageContent.substring(0, 50)}...`);
-            }
+            textContents.push(text);
+            seenTexts.add(text);
           }
-          
-        } catch (error) {
-          console.warn('Error processing element:', error);
         }
       }
       
-      console.log(`Extraction results: ${foundItems.filter(i => i.type === 'message').length} messages, ${foundItems.filter(i => i.type === 'date').length} dates`);
+      const mainContent = textContents.join(' ').trim();
       
-      // REQUIREMENT 6: Clear DOM to prevent memory leaks
-      if (settings.clearDOM && foundItems.length > 0) {
-        foundItems.forEach(item => {
-          if (item.element && item.element.parentNode) {
-            item.element.remove();
-          }
-        });
-        console.log(`Cleared ${foundItems.length} DOM elements to prevent memory leaks`);
+      // Additional cleanup to remove duplicate phrases and unwanted text
+      let cleanContent = mainContent
+        .replace(/\bEnter\b/g, '')
+        .replace(/\bPress Enter to send\b/g, '')
+        .replace(/\bType a message\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Remove duplicate phrases within the same message
+      const words = cleanContent.split(' ');
+      const uniqueWords = [];
+      
+      // Remove consecutive duplicate words
+      for (let i = 0; i < words.length; i++) {
+        if (i === 0 || words[i] !== words[i-1]) {
+          uniqueWords.push(words[i]);
+        }
       }
       
-      return foundItems;
-    }    // REQUIREMENT 1: Main scrolling and extraction loop
-    async function scrollAndExtract() {
+      cleanContent = uniqueWords.join(' ').trim();
+      
+      // Final validation - skip if no meaningful content or if it looks like UI text
+      if (!cleanContent || 
+          cleanContent.length < 1 ||
+          cleanContent.match(/^[^a-zA-Z0-9]+$/) || // Only special characters
+          cleanContent.toLowerCase() === sender.toLowerCase() ||
+          cleanContent.toLowerCase().includes('sent a message') ||
+          cleanContent.toLowerCase().includes('started a call') ||
+          cleanContent.toLowerCase().includes('missed call') ||
+          cleanContent.toLowerCase().includes('shared a') ||
+          cleanContent.toLowerCase().includes('reacted to') ||
+          cleanContent.toLowerCase().includes('liked a message') ||
+          cleanContent.toLowerCase().includes('loved a message')) {
+        return null;
+      }
+      
+      console.log(`Message ${index + 1}: ${sender} - ${cleanContent.substring(0, 50)}...`);
+      
+      return {
+        type: 'message',
+        index: index,
+        sender: sender,
+        content: cleanContent
+      };
+    }
+    
+    // Enhanced helper to get conversation partner name with better accuracy
+    function getConversationPartnerName() {
+      // Priority 1: Look for conversation header/title
+      const headerSelectors = [
+        'h1[dir="auto"]',
+        '[data-testid="conversation_name"]',
+        '[aria-label*="Conversation with"] h1',
+        'div[role="banner"] h1',
+        'header h1 span',
+        'div[role="banner"] span[dir="auto"]'
+      ];
+      
+      for (const selector of headerSelectors) {
+        const el = document.querySelector(selector);
+        if (el && el.textContent.trim()) {
+          let name = el.textContent.trim();
+          
+          // Clean up the name - remove common UI text
+          name = name.replace(/\s*\(.*?\)\s*/g, ''); // Remove parentheses content
+          name = name.replace(/\s*-\s*Messenger.*$/i, ''); // Remove "- Messenger" suffix
+          name = name.replace(/\s*•.*$/g, ''); // Remove bullet points and after
+          name = name.trim();
+          
+          // Validate name - must be reasonable length and not UI text
+          if (name && 
+              name.length > 0 && 
+              name.length < 100 &&
+              !name.toLowerCase().includes('messenger') && 
+              !name.toLowerCase().includes('facebook') && 
+              !name.toLowerCase().includes('chat') &&
+              !name.toLowerCase().includes('active') &&
+              !name.toLowerCase().includes('online') &&
+              !name.match(/^\d+$/) &&
+              !name.includes('•') &&
+              name !== 'Messages') {
+            console.log(`Found conversation partner from header: ${name}`);
+            return name;
+          }
+        }
+      }
+      
+      // Priority 2: Look for profile link or avatar with name
+      const profileSelectors = [
+        '[role="button"][aria-label*="profile"] span',
+        'a[href*="/profile/"] span',
+        '[data-testid*="profile"] span'
+      ];
+      
+      for (const selector of profileSelectors) {
+        const el = document.querySelector(selector);
+        if (el && el.textContent.trim()) {
+          const name = el.textContent.trim();
+          if (name && name.length > 0 && name.length < 50) {
+            console.log(`Found conversation partner from profile: ${name}`);
+            return name;
+          }
+        }
+      }
+      
+      // Priority 3: Analyze message senders to find the other person
+      const messageElements = document.querySelectorAll('div[role="row"]');
+      const senderCounts = {};
+      const currentUserIdentifiers = ['you', 'me', 'myself'];
+      
+      for (const msgEl of messageElements) {
+        // Look for sender name elements
+        const senderElements = msgEl.querySelectorAll('span[dir="auto"] strong, h4, h5, [aria-label*="sent by"]');
+        
+        for (const senderEl of senderElements) {
+          let senderText = senderEl.textContent?.trim();
+          if (senderText) {
+            // Clean sender name
+            senderText = senderText.replace(/\s*:.*$/g, ''); // Remove colon and after
+            senderText = senderText.replace(/\s*\(.*?\)\s*/g, ''); // Remove parentheses
+            senderText = senderText.trim();
+            
+            // Validate sender name
+            if (senderText && 
+                senderText.length > 0 && 
+                senderText.length < 50 &&
+                !senderText.match(/^\d+$/) &&
+                !senderText.match(/AM|PM/i) &&
+                !senderText.includes('Active') &&
+                !senderText.includes('ago') &&
+                !senderText.includes('•') &&
+                !currentUserIdentifiers.some(id => senderText.toLowerCase().includes(id))) {
+              
+              senderCounts[senderText] = (senderCounts[senderText] || 0) + 1;
+            }
+          }
+        }
+      }
+      
+      // Find the most frequent sender (excluding current user)
+      let bestSender = null;
+      let maxCount = 0;
+      
+      for (const [sender, count] of Object.entries(senderCounts)) {
+        if (count > maxCount && count > 2) { // Must appear at least 3 times
+          bestSender = sender;
+          maxCount = count;
+        }
+      }
+      
+      if (bestSender) {
+        console.log(`Found conversation partner by message analysis: ${bestSender} (${maxCount} messages)`);
+        return bestSender;
+      }
+      
+      console.log('Could not determine conversation partner name');
+      return null;
+    }
+    
+    // Enhanced backwards scrolling function to load ALL messages from the beginning
+    async function performAdvancedScroll() {
+      console.log('Starting backwards scroll to load ALL messages from conversation beginning...');
+      
+      let previousMessageCount = 0;
+      let currentMessageCount = 0;
+      let noChangeCount = 0;
+      let maxRetries = 50;
+      let scrollAttempts = 0;
+      
+      // Find the main message container
+      const messageContainer = document.querySelector('[role="log"]') || 
+                              document.querySelector('[aria-label*="Message"]') || 
+                              document.querySelector('[data-testid*="conversation"]');
+      
+      console.log('Found message container:', messageContainer ? 'YES' : 'NO');
+      
+      while (scrollAttempts < maxRetries) {
+        // Count current messages before scrolling
+        const messageElements = document.querySelectorAll('div[role="row"]');
+        currentMessageCount = messageElements.length;
+        
+        console.log(`Scroll attempt ${scrollAttempts + 1}: ${currentMessageCount} messages found`);
+        
+        // Check if we got more messages
+        if (currentMessageCount > previousMessageCount) {
+          noChangeCount = 0;
+          previousMessageCount = currentMessageCount;
+          console.log(`New messages loaded! Total: ${currentMessageCount}`);
+        } else {
+          noChangeCount++;
+          console.log(`No new messages (${noChangeCount}/5)`);
+        }
+        
+        // Stop if no new messages for 5 attempts
+        if (noChangeCount >= 5) {
+          console.log('Reached conversation beginning - no more messages to load');
+          break;
+        }
+        
+        // Aggressive backwards scrolling methods
+        if (messageContainer) {
+          messageContainer.scrollTop = 0;
+          if (messageContainer.scrollTo) {
+            messageContainer.scrollTo({ top: 0, behavior: 'instant' });
+          }
+        }
+        
+        // Scroll main window to top
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // Use keyboard shortcuts to go to beginning
+        document.body.focus();
+        document.dispatchEvent(new KeyboardEvent('keydown', { 
+          key: 'Home', 
+          ctrlKey: true, 
+          bubbles: true 
+        }));
+        
+        // Multiple Page Up presses to load older messages
+        for (let i = 0; i < 10; i++) {
+          document.dispatchEvent(new KeyboardEvent('keydown', { 
+            key: 'PageUp', 
+            bubbles: true 
+          }));
+          await sleep(100);
+        }
+        
+        // Give Facebook time to load older messages
+        await sleep(2000);
+        
+        scrollAttempts++;
+        
+        // Update progress
+        const progressPercent = Math.min(85, (scrollAttempts / maxRetries) * 85);
+        updateProgress(progressPercent, currentMessageCount);
+      }
+      
+      console.log(`Backwards scrolling completed! Final message count: ${currentMessageCount}`);
+      
+      // Final scroll to ensure we're at the very beginning
+      if (messageContainer) {
+        messageContainer.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+      
+      // Wait for content to settle
+      await sleep(2000);
+      
+      return currentMessageCount;
+    }
+    
+    // Simple extraction of text content only from conversation in original order
+    async function extractAllMessages() {
       try {
-        let previousHeight = 0;
-        let stuckCount = 0;
+        console.log('Starting comprehensive backwards scroll and extraction...');
+        console.log('Will extract: all messages in original Messenger order');
         
-        while (batchCount < maxBatches && stuckCount < 5) {
-          batchCount++;
-          console.log(` Batch ${batchCount}: Scrolling backwards and extracting...`);
+        // Show initial progress
+        updateProgress(10, 0);
+        
+        // Comprehensive backwards scroll to load ALL messages from beginning
+        console.log('Phase 1: Scrolling backwards to load all messages...');
+        const totalScrolledMessages = await performAdvancedScroll();
+        
+        console.log(`Phase 2: Processing ${totalScrolledMessages} loaded messages...`);
+        
+        // Extract all messages with simple text extraction
+        const allMessages = extractMessagesFromDOM();
+        
+        if (allMessages.length > 0) {
+          messages.push(...allMessages);
+          totalMessages = messages.length;
           
-          // Extract messages from current view
-          const batchItems = extractMessagesFromDOM();
-          
-          if (batchItems.length > 0) {
-            // Add to beginning to maintain chronological order (oldest first)
-            messages.unshift(...batchItems.reverse());
-            const messageCount = batchItems.filter(item => item.type === 'message').length;
-            totalMessages += messageCount;
-            console.log(` Extracted ${messageCount} messages, ${batchItems.filter(item => item.type === 'date').length} date headers`);
-            stuckCount = 0; // Reset stuck counter
-          }
-          
-          updateProgress(batchCount, totalMessages);
-          
-          // REQUIREMENT 1: Scroll backwards (up) to load more messages
-          const currentHeight = document.documentElement.scrollHeight;
-          
-          // Scroll to top aggressively
-          window.scrollTo(0, 0);
-          await sleep(1500); // Wait for Facebook to load more content
-          
-          // Try additional scrolling methods if needed
-          const messageContainer = document.querySelector('[aria-label="Message list"]');
-          if (messageContainer) {
-            messageContainer.scrollTop = 0;
-            await sleep(500);
-          }
-          
-          // Check if we're making progress
-          const newHeight = document.documentElement.scrollHeight;
-          if (newHeight === previousHeight) {
-            stuckCount++;
-            console.log(` Height unchanged (${stuckCount}/5), trying different scroll approach...`);
+          console.log(`Successfully extracted ${totalMessages} total messages from conversation`);
+          updateProgress(100, totalMessages);
+        } else {
+          console.log('No messages found in conversation - check if you are in the correct view');
+          chrome.runtime.sendMessage({
+            type: 'error',
+            error: 'No messages found. Make sure you are viewing a conversation with messages.'
+          });
+          return;
+        }
+        
+        // Generate simple text output in Messenger's original order with deduplication
+        let output = '';
+        
+        // Sort messages by index to maintain original Messenger order (oldest first)
+        const sortedMessages = messages.sort((a, b) => (a.index || 0) - (b.index || 0));
+        
+        // Remove any remaining duplicates based on content and sender with enhanced detection
+        const uniqueMessages = [];
+        const seenMessages = new Set();
+        const seenExactContent = new Set();
+        
+        for (const msg of sortedMessages) {
+          if (msg.type === 'message') {
+            const messageKey = `${msg.sender}:${msg.content}`;
+            const contentOnly = msg.content.toLowerCase().trim();
             
-            // Try keyboard navigation as fallback
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', ctrlKey: true }));
-            await sleep(1000);
+            // Skip if exact same message key or very similar content
+            if (!seenMessages.has(messageKey) && !seenExactContent.has(contentOnly)) {
+              // Check for very similar messages from same sender
+              let isSimilarDuplicate = false;
+              
+              for (const existingContent of seenExactContent) {
+                if (contentOnly.length > 10 && existingContent.length > 10) {
+                  const similarity = calculateSimilarity(contentOnly, existingContent);
+                  if (similarity > 0.85) { // 85% similar threshold
+                    isSimilarDuplicate = true;
+                    break;
+                  }
+                }
+              }
+              
+              if (!isSimilarDuplicate) {
+                uniqueMessages.push(msg);
+                seenMessages.add(messageKey);
+                seenExactContent.add(contentOnly);
+              } else {
+                console.log(`Removed similar duplicate: ${msg.sender} - ${msg.content.substring(0, 30)}...`);
+              }
+            } else {
+              console.log(`Removed exact duplicate: ${msg.sender} - ${msg.content.substring(0, 30)}...`);
+            }
           } else {
-            previousHeight = newHeight;
-          }
-          
-          await sleep(800); // Brief pause between batches
-        }
-        
-        console.log(`Extraction complete! Total: ${totalMessages} messages, ${batchCount} batches`);
-        
-        // REQUIREMENT 2 & 3: Format output as plain text with sender names
-        const output = [];
-        
-        for (const item of messages) {
-          if (item.type === 'date') {
-            // REQUIREMENT 4: Include date headers
-            output.push(`\n${item.content}\n`);
-          } else if (item.type === 'message') {
-            // REQUIREMENT 3: Sender name at start of each line
-            output.push(`${item.sender}: ${item.content}`);
+            // Always include date headers
+            uniqueMessages.push(msg);
           }
         }
         
-        // REQUIREMENT 2: Write to plain txt file
-        const finalText = output.join('\n');
+        console.log(`Final output: ${uniqueMessages.length} unique messages after final deduplication`);
+        
+        // Track current date section
+        let currentDateSection = '';
+        let messagesInCurrentSection = [];
+        
+        for (const msg of uniqueMessages) {
+          if (msg.type === 'date') {
+            // When we encounter a new date, output the previous section if it has messages
+            if (currentDateSection && messagesInCurrentSection.length > 0) {
+              output += `${currentDateSection}\n\n`;
+              for (const message of messagesInCurrentSection) {
+                output += `${message.sender}: ${message.content}\n`;
+              }
+              output += '\n';
+            }
+            
+            // Start new date section
+            currentDateSection = msg.content;
+            messagesInCurrentSection = [];
+            
+          } else if (msg.type === 'message') {
+            // Add message to current section
+            messagesInCurrentSection.push(msg);
+          }
+        }
+        
+        // Output the last section if it has messages
+        if (currentDateSection && messagesInCurrentSection.length > 0) {
+          output += `${currentDateSection}\n\n`;
+          for (const message of messagesInCurrentSection) {
+            output += `${message.sender}: ${message.content}\n`;
+          }
+          output += '\n';
+        }
+        
+        // If no date sections found, just output all messages in order
+        if (!currentDateSection) {
+          for (const msg of uniqueMessages) {
+            if (msg.type === 'message') {
+              output += `${msg.sender}: ${msg.content}\n`;
+            }
+          }
+        }
+        
+        // Download the file
         const conversationTitle = getConversationTitle();
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '_');
-        
-        const blob = new Blob([finalText], { type: 'text/plain; charset=utf-8' });
+        const filename = `messenger_${new Date().toISOString().slice(0, 10)}_ALL_MESSAGES.txt`;
+
+        const blob = new Blob([output], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `messenger_${conversationTitle}_${timestamp}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
         URL.revokeObjectURL(url);
-        
-        console.log(`Saved to: messenger_${conversationTitle}_${timestamp}.txt`);
         
         // Send completion message
         chrome.runtime.sendMessage({
           type: 'complete',
           totalMessages: totalMessages,
-          totalBatches: batchCount,
-          filename: `messenger_${conversationTitle}_${timestamp}.txt`
+          filename: filename,
+          participants: ['YOU', getConversationPartnerName() || 'OTHER PERSON']
         });
         
-        resolve();
+        console.log(`Export completed! ${totalMessages} messages saved to ${filename}`);
         
       } catch (error) {
-        console.error(' Export error:', error);
+        console.error('Export failed:', error);
         chrome.runtime.sendMessage({
           type: 'error',
           error: error.message
         });
-        reject(error);
       }
     }
-    
-    // Helper function to get conversation title
+
+    // Helper to get conversation title for filename
     function getConversationTitle() {
       const selectors = [
         'h1[dir="auto"]',
         '[data-testid="conversation_name"] span',
-        'div[role="banner"] h1',
-        'span[dir="auto"]'
+        'div[role="banner"] h1'
       ];
       
       for (const selector of selectors) {
@@ -483,7 +819,7 @@ function exportMessages(settings) {
     }
     
     // Start the extraction process
-    scrollAndExtract();
+    extractAllMessages();
   });
 }
 
@@ -491,13 +827,14 @@ function exportMessages(settings) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'progress') {
     updateProgress(message.percent);
-    showStatus(`Batch ${message.batch} - ${message.total} messages found`, 'info');
+    showStatus(`Processing conversation - ${message.current || message.total || 0} messages found`, 'info');
   } else if (message.type === 'complete') {
     const filename = message.filename || 'messenger_chat.txt';
-    showStatus(` Export complete! ${message.totalMessages} messages saved to ${filename}`, 'success');
+    const participants = message.participants ? message.participants.join(' and ') : 'both participants';
+    showStatus(`Complete! ${message.totalMessages} text messages from ${participants} saved to ${filename}`, 'success');
     resetUI();
   } else if (message.type === 'error') {
-    showStatus(` Error: ${message.error}`, 'error');
+    showStatus(`Error: ${message.error}`, 'error');
     resetUI();
   }
 });

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation Guide - Facebook Messenger Exporter</title>
+    <meta name="description" content="Step-by-step installation guide for Facebook Messenger Exporter Chrome extension.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header a {
+            color: #1877f2;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 10px;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1877f2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+        }
+        h2 {
+            color: #42b883;
+            border-bottom: 2px solid #42b883;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        .step-container {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 1px solid #e9ecef;
+        }
+        .step {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: flex-start;
+        }
+        .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3em;
+            margin-right: 25px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .step-content p {
+            margin: 10px 0;
+            color: #666;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid #dadce0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .screenshot-placeholder {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #6c757d;
+        }
+        .checklist {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .checklist ul {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .checklist li::before {
+            content: "";
+            margin-right: 10px;
+        }
+        .troubleshoot {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .video-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .video-placeholder {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            padding: 60px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #1877f2;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 1000;
+            transition: background 0.3s ease;
+        }
+        .back-link:hover {
+            background: #0d5fb3;
+            color: white;
+            text-decoration: none;
+        }
+        .next-steps {
+            background: linear-gradient(135deg, #42b883 0%, #369870 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .next-steps a {
+            color: white;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .back-link {
+                position: static;
+                display: inline-block;
+                margin-bottom: 20px;
+            }
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+            .step-number {
+                margin: 0 0 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Home</a>
+    
+    <div class="header">
+        <p><a href="index.html">🏠 Home</a> | <a href="download.html">📦 Download</a> | <a href="guide.html">📖 User Guide</a></p>
+    </div>
+
+    <div class="container">
+        <h1>⚙️ Installation Guide</h1>
+
+        <div class="info">
+            <h3>📋 Before You Start</h3>
+            <p>Make sure you have:</p>
+            <div class="checklist">
+                <ul>
+                    <li>Google Chrome browser installed</li>
+                    <li>Downloaded the extension ZIP file</li>
+                    <li>Administrator access on your computer</li>
+                    <li>Active Facebook account</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="warning">
+            <h4>🚨 Important Security Note</h4>
+            <p>This extension requires manual installation because it's not available on the Chrome Web Store. Chrome will show security warnings - this is normal for manually installed extensions. The extension only accesses Facebook pages and operates locally on your computer.</p>
+        </div>
+
+        <h2>📦 Step-by-Step Installation</h2>
+
+        <div class="step-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Download & Extract Files</h3>
+                    <p>Download the extension ZIP file from the <a href="download.html">download page</a> and extract it to a folder on your computer.</p>
+                    <p><strong>Recommended location:</strong> <span class="code">Desktop/facebook-messenger-exporter</span></p>
+                    
+                    <div class="info" style="margin-top: 15px;">
+                        <strong>What you should see:</strong>
+                        <ul>
+                            <li><span class="code">manifest.json</span></li>
+                            <li><span class="code">popup.html</span></li>
+                            <li><span class="code">popup.js</span></li>
+                            <li><span class="code">USER_GUIDE.html</span></li>
+                            <li><span class="code">README.md</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Open Chrome Extensions Page</h3>
+                    <p>Open Google Chrome and navigate to the extensions management page:</p>
+                    <ul>
+                        <li><strong>Method 1:</strong> Type <span class="code">chrome://extensions/</span> in the address bar</li>
+                        <li><strong>Method 2:</strong> Menu → More Tools → Extensions</li>
+                        <li><strong>Method 3:</strong> Press <span class="code">Ctrl+Shift+Delete</span> then click Extensions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Enable Developer Mode</h3>
+                    <p>On the Extensions page, look for the "Developer mode" toggle in the top-right corner and turn it <strong>ON</strong>.</p>
+                    
+                    <div class="warning" style="margin-top: 15px;">
+                        <strong>Don't see Developer mode?</strong>
+                        <ul>
+                            <li>Make sure you're on the Extensions page</li>
+                            <li>Try refreshing the page</li>
+                            <li>Check if you're signed into Chrome</li>
+                        </ul>
+                    </div>
+                    
+                    <p>After enabling, you'll see new buttons appear: "Load unpacked", "Pack extension", and "Update".</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Load the Extension</h3>
+                    <p>Click the <strong>"Load unpacked"</strong> button that appeared after enabling Developer mode.</p>
+                    <p>In the file browser dialog:</p>
+                    <ol>
+                        <li>Navigate to where you extracted the extension files</li>
+                        <li>Select the folder containing <span class="code">manifest.json</span></li>
+                        <li>Click <strong>"Select Folder"</strong> (or "Open" on Mac)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>Verify Installation</h3>
+                    <p>If successful, you should see:</p>
+                    <ul>
+                        <li>The extension appears in your extensions list</li>
+                        <li>A download icon (📥) appears in your Chrome toolbar</li>
+                        <li>Extension status shows as "On"</li>
+                    </ul>
+                    
+                    <div class="success" style="margin-top: 15px;">
+                        <strong>🎉 Installation Complete!</strong><br>
+                        The extension is now ready to use. You can now visit Facebook Messenger and start exporting your conversations.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-section">
+            <h2>🎥 Video Tutorial</h2>
+            <p>Watch this quick 2-minute video showing the complete installation process:</p>
+            <div class="video-placeholder">
+                <p>📹 Video Tutorial Coming Soon</p>
+                <p style="margin: 0; opacity: 0.8;">Visual step-by-step installation guide</p>
+            </div>
+        </div>
+
+        <h2>🛠️ Troubleshooting</h2>
+
+        <div class="troubleshoot">
+            <h4>❌ "This extension may have been corrupted"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Re-download the extension files</li>
+                <li>Make sure all files were extracted properly</li>
+                <li>Check that <span class="code">manifest.json</span> is present</li>
+            </ul>
+        </div>
+
+        <div class="troubleshoot">
+            <h4>❌ "Load unpacked" button is grayed out</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Make sure Developer mode is turned ON</li>
+                <li>Refresh the Extensions page</li>
+                <li>Try restarting Chrome</li>
+            </ul>
+        </div>
+
+        <div class="troubleshoot">
+            <h4>❌ Extension icon doesn't appear</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Click the puzzle piece icon (🧩) in Chrome toolbar</li>
+                <li>Pin the Facebook Messenger Exporter extension</li>
+                <li>Refresh any open Facebook tabs</li>
+            </ul>
+        </div>
+
+        <div class="troubleshoot">
+            <h4>❌ "Manifest file is missing or unreadable"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Make sure you selected the correct folder</li>
+                <li>The folder should contain <span class="code">manifest.json</span> file</li>
+                <li>Don't select a subfolder or parent folder</li>
+            </ul>
+        </div>
+
+        <h2>🔒 Security Information</h2>
+
+        <div class="info">
+            <h4>Why Chrome Shows Security Warnings</h4>
+            <p>Chrome displays warnings for all manually installed extensions as a security precaution. This extension:</p>
+            <ul>
+                <li>Only accesses Facebook and Messenger pages</li>
+                <li>Processes data locally in your browser</li>
+                <li>Never sends data to external servers</li>
+                <li>Cannot access other websites or personal files</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <h4>⚠️ Permissions Explained</h4>
+            <ul>
+                <li><strong>Active Tab:</strong> Needed to read Facebook messages from the current tab</li>
+                <li><strong>Downloads:</strong> Required to save exported messages to your computer</li>
+                <li><strong>Storage:</strong> Stores your extension settings (like date format preferences)</li>
+                <li><strong>Scripting:</strong> Allows the extension to interact with Facebook's webpage</li>
+            </ul>
+        </div>
+
+        <div class="next-steps">
+            <h2>🚀 Next Steps</h2>
+            <p style="margin-bottom: 20px;">Installation complete! Ready to start backing up your conversations?</p>
+            <p>
+                <a href="guide.html" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 5px; margin: 5px;">📖 Read User Guide</a>
+                <a href="https://facebook.com/messages" target="_blank" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 5px; margin: 5px;">Open Facebook Messenger</a>
+            </p>
+        </div>
+
+        <div class="success">
+            <h3>🎯 Quick Test</h3>
+            <p>To test if everything is working:</p>
+            <ol>
+                <li>Open <a href="https://facebook.com/messages" target="_blank">Facebook Messenger</a></li>
+                <li>Click on any conversation</li>
+                <li>Click the extension icon (📥) in your Chrome toolbar</li>
+                <li>Click "Start Export" to test the functionality</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

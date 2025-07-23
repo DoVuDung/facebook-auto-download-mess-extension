@@ -114,7 +114,7 @@ async function performExtraction() {
       for (const item of data.reverse()) {
         if (item.type === 'date') {
           fs.appendFileSync(outputFile, `\n${item.content}\n\n`);
-          console.log(`📅 ${item.content}`);
+          console.log(`${item.content}`);
         } else {
           fs.appendFileSync(outputFile, `${item.sender.toUpperCase()}: ${item.content}\n`);
           messageCount++;

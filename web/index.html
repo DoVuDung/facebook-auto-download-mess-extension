@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Messenger Exporter - Chrome Extension</title>
+    <meta name="description" content="Export your Facebook Messenger conversations to text files. Free Chrome extension with complete user guide and installation instructions.">
+    <meta name="keywords" content="facebook messenger export, chrome extension, conversation backup, messenger download">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+        .logo-icon {
+            font-size: 1.8em;
+            margin-right: 10px;
+        }
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        nav a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #1877f2;
+        }
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .hero p {
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+        .btn-primary {
+            background: #1877f2;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0d5fb3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .features {
+            background: white;
+            padding: 80px 0;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 60px;
+            color: #333;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        .feature-card {
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .feature-card p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .how-it-works {
+            background: #f8f9fa;
+            padding: 80px 0;
+        }
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 60px;
+            color: #333;
+        }
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .step {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            background: #1877f2;
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+        .step h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .download {
+            background: #1877f2;
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        .download h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .download p {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .download-stats {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            opacity: 0.8;
+        }
+        footer {
+            background: #333;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+        .footer-section h3 {
+            margin-bottom: 15px;
+            color: #1877f2;
+        }
+        .footer-section ul {
+            list-style: none;
+        }
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer-section a:hover {
+            color: #1877f2;
+        }
+        .footer-bottom {
+            border-top: 1px solid #555;
+            padding-top: 20px;
+            color: #999;
+        }
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5em;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            nav ul {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .download-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    <span class="logo-icon">💬</span>
+                    Messenger Exporter
+                </a>
+                <nav>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="download.html">Download</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Export Your Messenger Conversations</h1>
+            <p>Backup your Facebook Messenger chats with this free Chrome extension. Auto-scroll through entire conversations and download as clean text files.</p>
+            <div class="cta-buttons">
+                <a href="download.html" class="btn btn-primary">Download Extension</a>
+                <a href="guide.html" class="btn btn-secondary">View User Guide</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2>✨ Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Auto-Scroll</h3>
+                    <p>Automatically scrolls through your entire conversation history, loading older messages as it goes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Both Participants</h3>
+                    <p>Extracts messages from both you and the other person with clear sender identification.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>Date Headers</h3>
+                    <p>Includes timestamps and date headers to organize messages chronologically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📁</div>
+                    <h3>Clean Export</h3>
+                    <p>Downloads as readable text files with proper formatting and UTF-8 encoding.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Privacy First</h3>
+                    <p>All processing happens locally in your browser. No data sent to external servers.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>High Performance</h3>
+                    <p>Optimized for large conversations with memory management and batch processing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2>🔧 How It Works</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Install Extension</h3>
+                    <p>Download and install the Chrome extension from our download page.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Open Messenger</h3>
+                    <p>Go to Facebook Messenger and open any conversation you want to export.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Click Export</h3>
+                    <p>Click the extension icon and hit "Start Export" to begin the automatic process.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Get Your File</h3>
+                    <p>Wait for the export to complete and download your conversation as a text file.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="download">
+        <div class="container">
+            <h2>📦 Ready to Get Started?</h2>
+            <p>Join thousands of users who have successfully backed up their conversations</p>
+            
+            <div class="download-stats">
+                <div class="stat">
+                    <span class="stat-number">10K+</span>
+                    <span class="stat-label">Messages Exported</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">1K+</span>
+                    <span class="stat-label">Happy Users</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Free & Open Source</span>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="download.html" class="btn btn-primary">Download Now</a>
+                <a href="guide.html" class="btn btn-secondary">Read Guide First</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>📚 Documentation</h3>
+                    <ul>
+                        <li><a href="install.html">Installation Guide</a></li>
+                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="guide.html#troubleshooting">Troubleshooting</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>🔗 Quick Links</h3>
+                    <ul>
+                        <li><a href="download.html">Download Extension</a></li>
+                        <li><a href="https://facebook.com/messages" target="_blank">Facebook Messenger</a></li>
+                        <li><a href="https://messenger.com" target="_blank">Messenger.com</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>ℹ️ About</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="guide.html#privacy">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Facebook Messenger Exporter. Free & Open Source Chrome Extension.</p>
+                <p>Not affiliated with Meta/Facebook. This is an independent utility tool.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add some animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe feature cards
+        document.querySelectorAll('.feature-card, .step').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

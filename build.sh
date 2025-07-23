@@ -32,6 +32,26 @@ cp icon16.svg "$BUILD_DIR/$EXTENSION_NAME/"
 cp icon48.svg "$BUILD_DIR/$EXTENSION_NAME/"
 cp icon128.svg "$BUILD_DIR/$EXTENSION_NAME/"
 
+# Copy user guides (both markdown and HTML)
+if [ -f "INSTALLATION.md" ]; then
+    cp INSTALLATION.md "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+if [ -f "QUICK_START.md" ]; then
+    cp QUICK_START.md "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+if [ -f "USER_GUIDE.md" ]; then
+    cp USER_GUIDE.md "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+if [ -f "USER_GUIDE.html" ]; then
+    cp USER_GUIDE.html "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+if [ -f "welcome.html" ]; then
+    cp welcome.html "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+if [ -f "index.html" ]; then
+    cp index.html "$BUILD_DIR/$EXTENSION_NAME/"
+fi
+
 # Create a clean README for end users
 cat > "$BUILD_DIR/$EXTENSION_NAME/README.md" << 'EOF'
 # Facebook Messenger Chat Exporter

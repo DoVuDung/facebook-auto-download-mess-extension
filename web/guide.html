@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Messenger Exporter - User Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1877f2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #42b883;
+            border-bottom: 2px solid #42b883;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        h3 {
+            color: #666;
+            margin-top: 30px;
+        }
+        .step {
+            background: #f0f8ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #1877f2;
+        }
+        .step-number {
+            background: #1877f2;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .code-block {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .nav-tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .nav-tab.active {
+            background: #1877f2;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .emoji {
+            font-size: 1.2em;
+        }
+        .timeline {
+            border-left: 3px solid #1877f2;
+            padding-left: 20px;
+            margin: 20px 0;
+        }
+        .timeline-item {
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1877f2;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .troubleshoot-item {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .troubleshoot-header {
+            background: #f8f9fa;
+            padding: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .troubleshoot-content {
+            padding: 15px;
+            display: none;
+        }
+        .troubleshoot-content.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="emoji">💬</span> Facebook Messenger Exporter</h1>
+        <p style="text-align: center; font-size: 1.2em; color: #666;">Complete User Guide & Installation Instructions</p>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('installation')">📦 Installation</button>
+            <button class="nav-tab" onclick="showTab('quickstart')">🚀 Quick Start</button>
+            <button class="nav-tab" onclick="showTab('userguide')">📋 User Guide</button>
+            <button class="nav-tab" onclick="showTab('troubleshooting')">🛠️ Troubleshooting</button>
+        </div>
+
+        <!-- Installation Tab -->
+        <div id="installation" class="tab-content active">
+            <h2><span class="emoji">📦</span> Installation Guide</h2>
+            
+            <div class="warning">
+                <strong>Before You Start:</strong><br>
+                • Google Chrome browser<br>
+                • A computer (Windows, Mac, or Linux)<br>
+                • Access to your Facebook account
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>Download the Extension</strong>
+                        <p>Download the extension files to your computer and extract the ZIP file if needed. You should have a folder named <span class="code">facebook-messenger-exporter</span>.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <strong>Open Chrome Extensions</strong>
+                        <p>Open Google Chrome and type <span class="code">chrome://extensions/</span> in the address bar, then press Enter.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <strong>Enable Developer Mode</strong>
+                        <p>Look for "Developer mode" toggle in the top-right corner and click it to turn it ON. You'll see new buttons appear.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <strong>Load the Extension</strong>
+                        <p>Click "Load unpacked" button, navigate to the extension folder you downloaded, select the <span class="code">facebook-messenger-exporter</span> folder, and click "Select Folder".</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="step">
+                        <span class="step-number">5</span>
+                        <strong>Verify Installation</strong>
+                        <p>You should see the extension appear in your extensions list and a download icon in your Chrome toolbar. The extension is now ready to use!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>Installation Complete!</strong> Ready to start backing up your conversations!
+            </div>
+        </div>
+
+        <!-- Quick Start Tab -->
+        <div id="quickstart" class="tab-content">
+            <h2><span class="emoji">🚀</span> Quick Start Guide</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3><span class="emoji">1️⃣</span> Install Extension</h3>
+                    <div class="code-block">Chrome → Extensions → Developer Mode ON → Load Unpacked → Select Folder</div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="emoji">2️⃣</span> Open Facebook Messenger</h3>
+                    <div class="code-block">Go to: facebook.com/messages
+Click on: Any conversation you want to download</div>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="emoji">3️⃣</span> Use Extension</h3>
+                    <div class="code-block">Click: Extension icon in Chrome toolbar
+Click: "Start Export" button
+Wait: For automatic download</div>
+                </div>
+            </div>
+
+            <h3><span class="emoji">📋</span> What Happens Next?</h3>
+            <p>The extension will:</p>
+            <ul>
+                <li>Automatically scroll through your entire conversation</li>
+                <li>Extract messages from BOTH you and the other person</li>
+                <li>Download a text file with all messages</li>
+                <li>Include dates and proper formatting</li>
+            </ul>
+
+            <h3><span class="emoji">📁</span> Download Example</h3>
+            <div class="code-block">Jul 24, 2025, 2:30 PM
+
+YOU: Hello! How are you doing?
+FRIEND NAME: I'm great! Thanks for asking
+YOU: That's awesome to hear
+
+Jul 23, 2025, 8:45 PM
+
+FRIEND NAME: Did you see the news?
+YOU: Yes, quite interesting!</div>
+
+            <h3><span class="emoji">⏱️</span> How Long Does It Take?</h3>
+            <table>
+                <tr><th>Messages</th><th>Time</th></tr>
+                <tr><td>100</td><td>1-2 min</td></tr>
+                <tr><td>1,000</td><td>3-5 min</td></tr>
+                <tr><td>5,000</td><td>10+ min</td></tr>
+            </table>
+        </div>
+
+        <!-- User Guide Tab -->
+        <div id="userguide" class="tab-content">
+            <h2><span class="emoji">📋</span> Complete User Guide</h2>
+
+            <h3><span class="emoji">⚙️</span> Settings Explained</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Include Dates ✅</h4>
+                    <p><strong>ON:</strong> Adds date headers like "Jul 24, 2025, 2:30 PM"</p>
+                    <p><strong>OFF:</strong> Just shows messages without dates</p>
+                    <p><strong>Recommended:</strong> Keep this ON</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Clear DOM ⚙️</h4>
+                    <p><strong>ON:</strong> Removes processed messages from memory (helps with large conversations)</p>
+                    <p><strong>OFF:</strong> Keeps all messages in browser memory</p>
+                    <p><strong>Recommended:</strong> Turn ON for conversations with 1000+ messages</p>
+                </div>
+            </div>
+
+            <h3><span class="emoji">📊</span> Performance Guide</h3>
+            <table>
+                <tr><th>Conversation Size</th><th>Expected Time</th><th>Tips</th></tr>
+                <tr><td>100 messages</td><td>1-2 minutes</td><td>Quick and easy</td></tr>
+                <tr><td>1,000 messages</td><td>3-5 minutes</td><td>Turn on "Clear DOM"</td></tr>
+                <tr><td>5,000 messages</td><td>8-12 minutes</td><td>Be patient, grab coffee ☕</td></tr>
+                <tr><td>10,000+ messages</td><td>15+ minutes</td><td>Consider exporting in parts</td></tr>
+            </table>
+
+            <h3><span class="emoji">💡</span> Pro Tips</h3>
+            <div class="success">
+                <h4>For Best Results:</h4>
+                <ul>
+                    <li>Close other tabs to save memory</li>
+                    <li>Don't use Facebook while exporting</li>
+                    <li>Start with smaller conversations to test</li>
+                    <li>Export during off-peak hours (Facebook loads faster)</li>
+                </ul>
+
+                <h4>For Large Conversations:</h4>
+                <ul>
+                    <li>Turn on "Clear DOM" setting</li>
+                    <li>Close unnecessary browser tabs</li>
+                    <li>Let it run in background - don't interrupt</li>
+                    <li>Consider breaking very large exports into time periods</li>
+                </ul>
+            </div>
+
+            <h3><span class="emoji">🛡️</span> Privacy & Security</h3>
+            <ul>
+                <li><strong>No data sent online:</strong> Everything happens locally in your browser</li>
+                <li><strong>No passwords saved:</strong> Uses your existing Facebook login</li>
+                <li><strong>No tracking:</strong> Extension doesn't collect any data</li>
+                <li><strong>Open source:</strong> You can review the code</li>
+            </ul>
+        </div>
+
+        <!-- Troubleshooting Tab -->
+        <div id="troubleshooting" class="tab-content">
+            <h2><span class="emoji">🛠️</span> Troubleshooting</h2>
+
+            <div class="troubleshoot-item">
+                <div class="troubleshoot-header" onclick="toggleTroubleshoot(this)">
+                    "Please open Facebook Messenger first"
+                </div>
+                <div class="troubleshoot-content">
+                    <p><strong>Solution:</strong></p>
+                    <ul>
+                        <li>Make sure you're on <span class="code">facebook.com/messages</span> or <span class="code">messenger.com</span></li>
+                        <li>Refresh the page and try again</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="troubleshoot-item">
+                <div class="troubleshoot-header" onclick="toggleTroubleshoot(this)">
+                    "Please open a specific conversation"
+                </div>
+                <div class="troubleshoot-content">
+                    <p><strong>Solution:</strong></p>
+                    <ul>
+                        <li>You need to click on a specific chat, not just the main messages page</li>
+                        <li>Make sure you can see actual messages on screen</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="troubleshoot-item">
+                <div class="troubleshoot-header" onclick="toggleTroubleshoot(this)">
+                    "No messages found"
+                </div>
+                <div class="troubleshoot-content">
+                    <p><strong>Solution:</strong></p>
+                    <ul>
+                        <li>Try scrolling up manually to load some messages first</li>
+                        <li>Make sure the conversation has messages</li>
+                        <li>Check browser console (F12) for detailed error info</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="troubleshoot-item">
+                <div class="troubleshoot-header" onclick="toggleTroubleshoot(this)">
+                    Extension not working
+                </div>
+                <div class="troubleshoot-content">
+                    <p><strong>Solution:</strong></p>
+                    <ol>
+                        <li>Refresh the Facebook page</li>
+                        <li>Reload the extension in <span class="code">chrome://extensions/</span></li>
+                        <li>Try a different conversation to test</li>
+                        <li>Check that you're logged into Facebook</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="troubleshoot-item">
+                <div class="troubleshoot-header" onclick="toggleTroubleshoot(this)">
+                    Large conversations taking too long
+                </div>
+                <div class="troubleshoot-content">
+                    <p><strong>This is normal for conversations with thousands of messages</strong></p>
+                    <ul>
+                        <li>The extension may take 5-15 minutes for very large conversations</li>
+                        <li>Progress bar shows current status</li>
+                        <li>You can click "Stop Export" if needed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3><span class="emoji">🆘</span> Getting Help</h3>
+            <div class="warning">
+                <h4>Check Console for Errors:</h4>
+                <ol>
+                    <li>Press <strong>F12</strong> to open Developer Tools</li>
+                    <li>Click <strong>Console</strong> tab</li>
+                    <li>Look for error messages in red</li>
+                    <li>Copy any error messages for support</li>
+                </ol>
+            </div>
+
+            <h4>Common Error Messages:</h4>
+            <ul>
+                <li><strong>"No message container found"</strong> = Page not loaded properly, refresh and try again</li>
+                <li><strong>"Export failed"</strong> = Try refreshing Facebook and restarting export</li>
+                <li><strong>"Selector failed"</strong> = Facebook changed layout, extension may need update</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleTroubleshoot(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

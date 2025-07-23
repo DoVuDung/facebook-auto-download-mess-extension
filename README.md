@@ -16,7 +16,7 @@ If you're seeing the URL: `https://www.facebook.com/login.php?next=https%3A%2F%2
 1. 🔐 **Enter your Facebook credentials** (email/username and password)
 2. 🛡️ **Complete 2FA** if prompted (authenticator app, SMS, etc.)
 3.  **Wait for redirect** - Facebook will take you to Messenger automatically
-4. 💬 **Click on your conversation** that you want to extract
+4. **Click on your conversation** that you want to extract
 5. 👀 **Verify you can see messages** in the chat
 6. ⌨️ **Press Ctrl+C** in the terminal to start extraction
 

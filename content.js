@@ -1,7 +1,7 @@
 // Content script for Facebook Messenger Chat Exporter
 // This script runs on Facebook Messenger pages
 
-console.log('🚀 Messenger Chat Exporter content script loaded');
+console.log('Messenger Chat Exporter content script loaded');
 
 // Add visual indicator when extension is active
 function addExportIndicator() {
@@ -12,7 +12,7 @@ function addExportIndicator() {
   // Create new indicator
   const indicator = document.createElement('div');
   indicator.id = 'messenger-exporter-indicator';
-  indicator.innerHTML = '📱 Chat Exporter Ready';
+  indicator.innerHTML = 'Chat Exporter Ready';
   indicator.style.cssText = `
     position: fixed;
     top: 10px;
@@ -136,4 +136,4 @@ window.messengerExporter = {
   }
 };
 
-console.log(' Messenger Chat Exporter ready');
+console.log('Messenger Chat Exporter ready');

@@ -132,7 +132,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
     // Write headers first
     if (messages.headers.length) {
-      console.log(`📅 Found ${messages.headers.length} date headers`);
+      console.log(`Found ${messages.headers.length} date headers`);
       messages.headers.forEach(header => {
         fs.appendFileSync(outputFile, `\n${header}\n\n`);
       });
@@ -140,7 +140,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
     
     // Write messages
     if (messages.messages.length) {
-      console.log(`💬 Found ${messages.messages.length} messages in this batch`);
+      console.log(`Found ${messages.messages.length} messages in this batch`);
       messages.messages.forEach((msg) => {
         fs.appendFileSync(outputFile, `${msg}\n`);
         messageCount++;

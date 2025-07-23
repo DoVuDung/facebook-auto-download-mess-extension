@@ -1,9 +1,0 @@
-
-<svg width="48" height="48" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" fill="#1877f2" rx="4"/>
-  <circle cx="14.399999999999999" cy="19.200000000000003" r="3.84" fill="white"/>
-  <circle cx="24" cy="19.200000000000003" r="3.84" fill="white"/>
-  <circle cx="33.599999999999994" cy="19.200000000000003" r="3.84" fill="white"/>
-  <rect x="9.600000000000001" y="28.799999999999997" width="28.799999999999997" height="2.4000000000000004" fill="white" rx="2"/>
-  <text x="24" y="40.8" text-anchor="middle" fill="white" font-size="7.199999999999999" font-family="Arial">FB</text>
-</svg>
