@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Facebook Messenger Chat Exporter",
+  "description": "Export Facebook Messenger conversations to text files with one click",
+  "version": "1.0",
+  "permissions": ["scripting", "activeTab", "downloads", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Export Messenger Chat"
+  },
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://messenger.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/messages/*",
+        "https://www.facebook.com/t/*",
+        "https://messenger.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon16.svg",
+    "48": "icon48.svg",
+    "128": "icon128.svg"
+  }
+}

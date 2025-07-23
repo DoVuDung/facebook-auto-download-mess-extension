@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Font Test - Before vs After</title>
+    <style>
+        .container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            font-family: Arial;
+        }
+        
+        .old-fonts {
+            width: 300px;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .old-fonts h3 {
+            color: #e41e3f;
+            margin-top: 0;
+        }
+        
+        .old-fonts .demo {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 12px;
+            background: #1877f2;
+            color: white;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+        }
+        
+        .new-fonts {
+            width: 300px;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .new-fonts h3 {
+            color: #00a400;
+            margin-top: 0;
+        }
+        
+        .new-fonts .demo {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding: 12px;
+            background: #1877f2;
+            color: white;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .comparison {
+            margin-top: 20px;
+            padding: 16px;
+            background: #fff3cd;
+            border-radius: 8px;
+        }
+        
+        .comparison h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="old-fonts">
+            <h3>Before (Old Fonts)</h3>
+            <div class="demo">Messenger Exporter</div>
+            <div class="demo">Start Export</div>
+            <div class="demo">Check Current Page</div>
+            <p><small>Issues: Inconsistent rendering, poor smoothing, generic font stack</small></p>
+        </div>
+        
+        <div class="new-fonts">
+            <h3>After (Fixed Fonts)</h3>
+            <div class="demo">Messenger Exporter</div>
+            <div class="demo">Start Export</div>
+            <div class="demo">Check Current Page</div>
+            <p><small>Improvements: System fonts, better smoothing, consistent weight</small></p>
+        </div>
+    </div>
+    
+    <div class="comparison">
+        <h4>🔤 Font Improvements Made:</h4>
+        <ul>
+            <li><strong>System Font Stack:</strong> Uses -apple-system, BlinkMacSystemFont for native look</li>
+            <li><strong>Font Smoothing:</strong> Added -webkit-font-smoothing: antialiased</li>
+            <li><strong>Button Inheritance:</strong> Buttons now inherit font-family</li>
+            <li><strong>Consistent Weights:</strong> Proper font-weight values (400, 500, 600)</li>
+            <li><strong>Better Spacing:</strong> Improved line-height and letter-spacing</li>
+            <li><strong>Cross-Platform:</strong> Works consistently on Mac, Windows, Linux</li>
+        </ul>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 16px; background: #d1edff; border-radius: 8px;">
+        <h4 style="color: #0064d1; margin-top: 0;">Next Steps:</h4>
+        <p>1. Go to <code>chrome://extensions/</code></p>
+        <p>2. Click the reload button on your extension</p>
+        <p>3. Open the extension popup to see the improved fonts!</p>
+    </div>
+</body>
+</html>

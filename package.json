@@ -1,0 +1,27 @@
+{
+  "name": "facebook-script-extract-messenger-from-chrome",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node extractMessages.js",
+    "chrome": "node extractMessagesRegularChrome.js",
+    "real-chrome": "node extractMessagesRealChrome.js",
+    "scrape": "node scrapeMessenger.js",
+    "simple": "node extractMessagesSimple.js",
+    "existing": "node extractExistingChrome.js",
+    "setup-chrome": "./start-chrome-debug.sh",
+    "debug": "node extractMessages.js --debug",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "puppeteer": "^24.15.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}

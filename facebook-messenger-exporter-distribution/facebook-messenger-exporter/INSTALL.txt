@@ -1,0 +1,13 @@
+🚀 INSTALLATION INSTRUCTIONS
+
+1. Open Google Chrome
+2. Type: chrome://extensions/ in the address bar
+3. Turn ON "Developer mode" (toggle in top-right corner)
+4. Click "Load unpacked" button
+5. Select this folder and click "Select"
+6. Extension will appear in your extensions list
+7. Pin it to your toolbar for easy access
+
+Ready to use!
+
+Go to Facebook Messenger, open any conversation, and click the extension icon!
