@@ -1,7 +1,32 @@
 // Content script for Facebook Messenger Chat Exporter
 // This script runs on Facebook Messenger pages
 
+
+
 console.log('Messenger Chat Exporter content script loaded');
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function autoScrollToTop(limit = 10) {
+  let lastHeight = 0;
+  let sameCount = 0;
+
+  while (sameCount < limit) {
+    window.scrollTo(0, 0);
+    await sleep(1000);
+
+    const currentHeight = document.body.scrollHeight;
+    if (currentHeight === lastHeight) {
+      sameCount++;
+    } else {
+      sameCount = 0;
+      lastHeight = currentHeight;
+    }
+  }
+
+  console.log("Reached top of conversation.");
+}
+
 
 // Add visual indicator when extension is active
 function addExportIndicator() {

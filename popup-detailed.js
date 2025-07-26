@@ -137,7 +137,7 @@ function exportMessages(settings) {
       
       // Find message containers
       const containerSelectors = [
-        '[aria-label="Message list"]',
+        // '[aria-label="Message list"]',
         '[aria-label="Messages"]', 
         '[role="log"]',
         '[data-testid="conversation-viewer"]'
