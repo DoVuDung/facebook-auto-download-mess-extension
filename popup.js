@@ -1433,7 +1433,7 @@ function exportMessages(settings) {
           percent: dynamicProgressPercent,
           current: currentMessageCount,
           total: currentMessageCount,
-          status: `Loading messages... (${currentMessageCount} found, ${scrollAttempts}/${dynamicMaxRetries} attempts${efficiencyInfo})`,
+          status: `Loading messages... (${currentMessageCount} found messages, ${scrollAttempts}/${dynamicMaxRetries} attempts${efficiencyInfo})`,
         });
 
         // === PERFORMANCE-OPTIMIZED MULTI-METHOD SCROLLING - Prioritize efficient methods ===
