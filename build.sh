@@ -4,14 +4,49 @@ echo "🏗️ Building Chrome Extension for Distribution"
 echo "============================================="
 echo ""
 
+# Function to increment version number
+increment_version() {
+    local version=$1
+    local increment_type=${2:-patch} # patch, minor, or major
+    
+    IFS='.' read -ra VERSION_PARTS <<< "$version"
+    local major=${VERSION_PARTS[0]}
+    local minor=${VERSION_PARTS[1]}
+    local patch=${VERSION_PARTS[2]}
+    
+    case $increment_type in
+        major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+        minor)
+            minor=$((minor + 1))
+            patch=0
+            ;;
+        patch|*)
+            patch=$((patch + 1))
+            ;;
+    esac
+    
+    echo "$major.$minor.$patch"
+}
+
 # Create build directory
 BUILD_DIR="dist"
 EXTENSION_NAME="facebook-messenger-exporter"
-VERSION=$(grep '"version"' manifest.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+CURRENT_VERSION=$(grep '"version"' manifest.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
 
+# Check for version increment type argument
+INCREMENT_TYPE="patch"
+if [ "$1" = "major" ] || [ "$1" = "minor" ] || [ "$1" = "patch" ]; then
+    INCREMENT_TYPE="$1"
+fi
+
+echo "Current version: $CURRENT_VERSION"
 echo "Creating distribution package..."
 echo "   Extension: $EXTENSION_NAME"
-echo "   Version: $VERSION"
+echo "   Increment type: $INCREMENT_TYPE"
 echo ""
 
 # Clean previous build
@@ -108,7 +143,7 @@ echo ""
 
 # Create a ZIP file for distribution
 cd "$BUILD_DIR"
-ZIP_NAME="${EXTENSION_NAME}-v${VERSION}.zip"
+ZIP_NAME="${EXTENSION_NAME}-v${CURRENT_VERSION}.zip"
 zip -r "$ZIP_NAME" "$EXTENSION_NAME/" > /dev/null
 
 echo "Created distribution files:"
@@ -127,21 +162,62 @@ echo "   Files included:"
 ls -1 "$EXTENSION_NAME/" | sed 's/^/      • /'
 
 echo ""
-echo "🎯 DISTRIBUTION READY!"
-echo "=============================="
-echo ""
-echo "📤 Share with users:"
-echo "   1. Send them the ZIP file: $ZIP_NAME"
-echo "   2. Or share the folder: $EXTENSION_NAME/"
-echo ""
-echo "User instructions:"
-echo "   1. Extract ZIP (if using ZIP)"
-echo "   2. Go to chrome://extensions/"
-echo "   3. Enable Developer mode"
-echo "   4. Click 'Load unpacked'"
-echo "   5. Select the extension folder"
-echo ""
-echo "Build complete!"
+
+# If build was successful, increment version
+if [ $? -eq 0 ]; then
+    cd ..
+    NEW_VERSION=$(increment_version "$CURRENT_VERSION" "$INCREMENT_TYPE")
+    
+    echo "🎯 BUILD SUCCESSFUL!"
+    echo "=============================="
+    echo ""
+    echo "🔄 Auto-incrementing version..."
+    echo "   From: $CURRENT_VERSION"
+    echo "   To: $NEW_VERSION"
+    echo ""
+    
+    # Update version in manifest.json
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s/\"version\": *\"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" manifest.json
+    else
+        # Linux
+        sed -i "s/\"version\": *\"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" manifest.json
+    fi
+    
+    # Update version in package.json if it exists
+    if [ -f "package.json" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s/\"version\": *\"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" package.json
+        else
+            # Linux
+            sed -i "s/\"version\": *\"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" package.json
+        fi
+        echo "   ✅ Updated package.json"
+    fi
+    
+    echo "   ✅ Updated manifest.json"
+    echo "   ✅ Version increment complete"
+    echo ""
+    echo "📤 Share with users:"
+    echo "   1. Send them the ZIP file: $ZIP_NAME"
+    echo "   2. Or share the folder: $EXTENSION_NAME/"
+    echo ""
+    echo "User instructions:"
+    echo "   1. Extract ZIP (if using ZIP)"
+    echo "   2. Go to chrome://extensions/"
+    echo "   3. Enable Developer mode"
+    echo "   4. Click 'Load unpacked'"
+    echo "   5. Select the extension folder"
+    echo ""
+    echo "🚀 Ready for next development cycle with version $NEW_VERSION!"
+else
+    cd ..
+    echo "❌ BUILD FAILED!"
+    echo "Version not incremented due to build errors."
+    exit 1
+fi
 
 cd ..
 echo ""
