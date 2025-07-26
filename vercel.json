@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "name": "facebook-messenger-exporter",
+  "builds": [
+    {
+      "src": "web/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "build.sh",
+      "use": "@vercel/bash"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/web/index.html"
+    },
+    {
+      "src": "/download",
+      "dest": "/web/download.html"
+    },
+    {
+      "src": "/guide",
+      "dest": "/web/guide.html"
+    },
+    {
+      "src": "/install",
+      "dest": "/web/install.html"
+    },
+    {
+      "src": "/dist/(.*)",
+      "dest": "/dist/$1"
+    },
+    {
+      "src": "/web/(.*)",
+      "dest": "/web/$1"
+    }
+  ],
+  "functions": {
+    "build.sh": {
+      "runtime": "vercel-bash@4.0.0"
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "cleanUrls": true,
+  "trailingSlash": false
+}

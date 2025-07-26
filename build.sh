@@ -87,6 +87,22 @@ if [ -f "index.html" ]; then
     cp index.html "$BUILD_DIR/$EXTENSION_NAME/"
 fi
 
+# Copy web folder HTML files for complete documentation
+if [ -d "web" ]; then
+    if [ -f "web/download.html" ]; then
+        cp web/download.html "$BUILD_DIR/$EXTENSION_NAME/"
+    fi
+    if [ -f "web/guide.html" ]; then
+        cp web/guide.html "$BUILD_DIR/$EXTENSION_NAME/"
+    fi
+    if [ -f "web/install.html" ]; then
+        cp web/install.html "$BUILD_DIR/$EXTENSION_NAME/"
+    fi
+    if [ -f "web/index.html" ]; then
+        cp web/index.html "$BUILD_DIR/$EXTENSION_NAME/web-index.html"
+    fi
+fi
+
 # Create a clean README for end users
 cat > "$BUILD_DIR/$EXTENSION_NAME/README.md" << 'EOF'
 # Facebook Messenger Chat Exporter

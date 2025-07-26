@@ -1,0 +1,73 @@
+name: Build and Deploy Extension
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Make build script executable
+      run: chmod +x build.sh
+    
+    - name: Build extension
+      run: ./build.sh
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: facebook-messenger-exporter
+        path: |
+          dist/
+          !dist/**/*.log
+    
+    - name: Create Release ZIP
+      run: |
+        cd dist
+        zip -r ../facebook-messenger-exporter-release.zip facebook-messenger-exporter/
+    
+    - name: Upload release ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-zip
+        path: facebook-messenger-exporter-release.zip
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: facebook-messenger-exporter
+        path: dist/
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-args: '--prod'
+        working-directory: ./

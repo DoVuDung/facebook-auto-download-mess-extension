@@ -1,0 +1,32 @@
+{
+  "name": "facebook-messenger-exporter-web",
+  "version": "1.0.2",
+  "description": "Web interface and documentation for Facebook Messenger Exporter Chrome Extension",
+  "main": "web/index.html",
+  "scripts": {
+    "build": "./vercel-build.sh",
+    "dev": "python3 -m http.server 3000",
+    "start": "python3 -m http.server 8080",
+    "vercel-build": "./vercel-build.sh"
+  },
+  "keywords": [
+    "facebook",
+    "messenger",
+    "export",
+    "chrome-extension",
+    "backup",
+    "conversations"
+  ],
+  "author": "Facebook Messenger Exporter Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DoVuDung/facebook-auto-download-mess-extension.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^2.15.0"
+  }
+}
