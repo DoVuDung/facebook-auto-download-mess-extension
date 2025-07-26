@@ -12,6 +12,7 @@ const progressBar = document.getElementById("progressBar");
 // Settings
 const includeDatesCheckbox = document.getElementById("includeDates");
 const includeTimestampsCheckbox = document.getElementById("includeTimestamps");
+const enableStreamingCheckbox = document.getElementById("enableStreaming");
 const clearDOMCheckbox = document.getElementById("clearDOM");
 
 // Show status message
@@ -89,6 +90,7 @@ async function startExport() {
   const settings = {
     includeDates: includeDatesCheckbox.checked,
     includeTimestamps: includeTimestampsCheckbox.checked,
+    enableStreaming: enableStreamingCheckbox.checked,
     clearDOM: clearDOMCheckbox.checked,
   };
 
@@ -214,6 +216,83 @@ function exportMessages(settings) {
         current: current,
         total: totalMessages,
       });
+    }
+
+    // STREAMING SAVE SYSTEM: Progressive file saving during extraction
+    let streamingBuffer = [];
+    let lastStreamSave = 0;
+    const STREAM_BUFFER_SIZE = 100; // Save every 100 messages
+    const STREAM_TIME_INTERVAL = 30000; // Save every 30 seconds
+    let streamingEnabled = settings.enableStreaming; // Use setting
+    let streamingSaveCount = 0;
+
+    function generateStreamingOutput(messages) {
+      let output = "";
+      const sortedMessages = messages.sort((a, b) => {
+        const aOrder = a.chronoOrder || a.mapIndex || a.index || 0;
+        const bOrder = b.chronoOrder || b.mapIndex || b.index || 0;
+        return aOrder - bOrder;
+      });
+
+      for (const msg of sortedMessages) {
+        if (msg.type === "date" && settings.includeDates) {
+          output += `\n=== ${msg.content} ===\n\n`;
+        } else if (msg.type === "message") {
+          const timestamp = settings.includeTimestamps && msg.timestamp ? ` [${msg.timestamp}]` : '';
+          output += `${msg.sender}${timestamp}: ${msg.content}\n`;
+        }
+      }
+      return output;
+    }
+
+    function saveStreamingData() {
+      if (!streamingEnabled || streamingBuffer.length === 0) return;
+
+      try {
+        const output = generateStreamingOutput(streamingBuffer);
+        
+        if (output.trim()) {
+          // Create filename with timestamp and part number
+          const now = new Date();
+          const timestamp = now.toISOString().slice(0, 19).replace(/[:]/g, '-');
+          const filename = `messenger_export_${timestamp}_part${++streamingSaveCount}.txt`;
+          
+          // Create blob and download
+          const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          
+          // Use Chrome downloads API for background downloading
+          chrome.runtime.sendMessage({
+            type: "streamingSave",
+            url: url,
+            filename: filename,
+            messageCount: streamingBuffer.length,
+            totalSaved: streamingSaveCount * STREAM_BUFFER_SIZE
+          });
+
+          console.log(`📦 STREAMING SAVE: Saved ${streamingBuffer.length} messages to ${filename}`);
+          
+          // Clear buffer after saving
+          streamingBuffer = [];
+          lastStreamSave = Date.now();
+        }
+      } catch (error) {
+        console.error("❌ Streaming save error:", error);
+      }
+    }
+
+    function addToStreamingBuffer(messageData) {
+      if (!streamingEnabled) return;
+      
+      streamingBuffer.push(messageData);
+      
+      // Save based on buffer size or time interval
+      const shouldSaveBySize = streamingBuffer.length >= STREAM_BUFFER_SIZE;
+      const shouldSaveByTime = (Date.now() - lastStreamSave) >= STREAM_TIME_INTERVAL;
+      
+      if (shouldSaveBySize || shouldSaveByTime) {
+        saveStreamingData();
+      }
     }
 
     // PROGRESSIVE MAP-BASED: Extract and save messages to Map continuously
@@ -608,6 +687,9 @@ function exportMessages(settings) {
                   validMessages++;
                   newMessagesFound++;
 
+                  // STREAMING SAVE: Add to buffer for progressive saving
+                  addToStreamingBuffer(messageData);
+
                   // MEMORY OPTIMIZATION: For massive conversations, periodically clean up hash set
                   if (messageMap.size > 0 && messageMap.size % 1000 === 0 && window.contentHashSet) {
                     console.log(`🧹 Memory cleanup: Hash set size before: ${window.contentHashSet.size}`);
@@ -651,6 +733,9 @@ function exportMessages(settings) {
               messageMap.set(dateKey, messageData);
               processedElementIds.add(elementId);
               newMessagesFound++;
+
+              // STREAMING SAVE: Add date headers to buffer too
+              addToStreamingBuffer(messageData);
             }
           }
         } catch (error) {
@@ -1231,36 +1316,36 @@ function exportMessages(settings) {
             performanceScore = 0.6; // Very low efficiency
           }
           
-          // DYNAMIC MAX RETRIES - scales with conversation size and performance
+          // DYNAMIC MAX RETRIES - scales with conversation size and performance (ENHANCED FOR 10K+)
           if (currentMessageCount > 10000) {
-            // MASSIVE conversations (10k+) - scale dramatically with performance
-            dynamicMaxRetries = Math.floor(Math.max(300, Math.min(2000, 
-              currentMessageCount * 0.15 * performanceScore
+            // MASSIVE conversations (10k+) - UNLIMITED scaling for complete extraction
+            dynamicMaxRetries = Math.floor(Math.max(500, Math.min(5000, 
+              currentMessageCount * 0.3 * performanceScore // Doubled scaling factor
             )));
           } else if (currentMessageCount > 5000) {
-            // Very large conversations (5k+) - generous scaling
-            dynamicMaxRetries = Math.floor(Math.max(200, Math.min(1000, 
-              currentMessageCount * 0.1 * performanceScore
+            // Very large conversations (5k+) - much more generous scaling
+            dynamicMaxRetries = Math.floor(Math.max(400, Math.min(2000, 
+              currentMessageCount * 0.2 * performanceScore // Doubled scaling factor
             )));
           } else if (currentMessageCount > 2000) {
-            // Large conversations (2k+) - moderate scaling
-            dynamicMaxRetries = Math.floor(Math.max(150, Math.min(500, 
-              currentMessageCount * 0.08 * performanceScore
+            // Large conversations (2k+) - enhanced scaling
+            dynamicMaxRetries = Math.floor(Math.max(250, Math.min(800, 
+              currentMessageCount * 0.15 * performanceScore // Nearly doubled
             )));
           } else if (currentMessageCount > 1000) {
-            // Medium conversations (1k+) - conservative scaling
-            dynamicMaxRetries = Math.floor(Math.max(100, Math.min(300, 
-              currentMessageCount * 0.06 * performanceScore
+            // Medium conversations (1k+) - improved scaling
+            dynamicMaxRetries = Math.floor(Math.max(150, Math.min(400, 
+              currentMessageCount * 0.12 * performanceScore // Doubled
             )));
           } else if (currentMessageCount > 500) {
-            // Small conversations - fixed reasonable limit
-            dynamicMaxRetries = Math.floor(Math.max(60, Math.min(150, 
-              currentMessageCount * 0.05 * performanceScore
+            // Small conversations - enhanced limits
+            dynamicMaxRetries = Math.floor(Math.max(80, Math.min(200, 
+              currentMessageCount * 0.08 * performanceScore // Increased
             )));
           } else {
-            // Very small conversations - minimal attempts
-            dynamicMaxRetries = Math.floor(Math.max(20, Math.min(80, 
-              currentMessageCount * 0.1 + 10
+            // Very small conversations - improved attempts
+            dynamicMaxRetries = Math.floor(Math.max(30, Math.min(100, 
+              currentMessageCount * 0.15 + 15 // Increased base
             )));
           }
           
@@ -1269,28 +1354,32 @@ function exportMessages(settings) {
         
         calculateDynamicAttempts();
         
-        // PERFORMANCE-OPTIMIZED wait times
-        if (currentMessageCount > 5000) {
-          waitTime = performanceScore > 1.2 ? 1500 : 2000; // Faster if efficient
+        // PERFORMANCE-OPTIMIZED wait times (ENHANCED FOR 10K+)
+        if (currentMessageCount > 10000) {
+          waitTime = performanceScore > 1.2 ? 1000 : 1800; // Faster for massive conversations
+        } else if (currentMessageCount > 5000) {
+          waitTime = performanceScore > 1.2 ? 1200 : 1800; // Faster if efficient
         } else if (currentMessageCount > 2000) {
-          waitTime = performanceScore > 1.2 ? 1200 : 1800;
-        } else if (currentMessageCount > 1000) {
           waitTime = performanceScore > 1.2 ? 1000 : 1500;
+        } else if (currentMessageCount > 1000) {
+          waitTime = performanceScore > 1.2 ? 800 : 1200;
         } else if (currentMessageCount < 30) {
-          waitTime = 600; // Always fast for small conversations
+          waitTime = 500; // Always fast for small conversations
         } else if (currentMessageCount < 100) {
-          waitTime = 800;
+          waitTime = 600;
         } else {
-          waitTime = Math.max(800, 2000 - (aggressionLevel * 200)); // Scale with aggression
+          waitTime = Math.max(600, 1800 - (aggressionLevel * 200)); // Scale with aggression
         }
         
-        // PERFORMANCE-BASED patience levels
-        if (currentMessageCount > 5000) {
-          patienceLevel = Math.floor(15 * performanceScore); // Scale patience with performance
+        // PERFORMANCE-BASED patience levels (MAXIMIZED FOR 10K+)
+        if (currentMessageCount > 10000) {
+          patienceLevel = Math.floor(25 * performanceScore); // Maximum patience for massive conversations
+        } else if (currentMessageCount > 5000) {
+          patienceLevel = Math.floor(20 * performanceScore); // Scale patience with performance
         } else if (currentMessageCount > 2000) {
-          patienceLevel = Math.floor(12 * performanceScore);
+          patienceLevel = Math.floor(15 * performanceScore);
         } else if (currentMessageCount > 1000) {
-          patienceLevel = Math.floor(10 * performanceScore);
+          patienceLevel = Math.floor(12 * performanceScore);
         } else if (currentMessageCount < 30) {
           patienceLevel = 3;
         } else if (currentMessageCount < 100) {
@@ -1328,8 +1417,135 @@ function exportMessages(settings) {
       if (currentMessageCount > 0 && scrollAttempts === 0) {
       }
 
-      while (scrollAttempts < dynamicMaxRetries && !userRequestedStop) {
+      // SCROLL CAPABILITY TRACKING - Only count attempts when scrolling is actually possible
+      let scrollCapabilityAttempts = 0; // Only count when we can actually scroll
+      let totalScrollAttempts = 0; // Track all attempts for diagnostics
+      let lastScrollPosition = -1;
+      let canStillScroll = true;
+      let noScrollChangeCount = 0;
+
+      while (canStillScroll && !userRequestedStop) {
         const startTime = Date.now();
+        totalScrollAttempts++;
+        
+        // SPECIAL OVERRIDE SYSTEM: For conversations showing signs of being truly massive (10K+)
+        const hasMassiveConversationIndicators = () => {
+          // If we already have 1000+ messages and still finding more efficiently, likely much larger
+          const isFindingMessagesEfficiently = messagesPerAttempt > 1.0;
+          const hasRecentProgress = (scrollCapabilityAttempts - lastProgressAttempt) < 10;
+          const showsMassiveSigns = currentMessageCount >= 1000 && isFindingMessagesEfficiently && hasRecentProgress;
+          
+          // Additional signs: very tall scroll container, lots of DOM elements
+          const containerScrollHeight = conversationDetailContainer ? conversationDetailContainer.scrollHeight : 0;
+          const isVeryTallContainer = containerScrollHeight > 50000; // Very long scroll area
+          
+          return showsMassiveSigns || isVeryTallContainer;
+        };
+        
+        // MASSIVE CONVERSATION OVERRIDE: Apply ultra-patient settings if conversation shows massive signs
+        if (hasMassiveConversationIndicators() && currentMessageCount >= 1000) {
+          // Override all limits for truly massive conversations
+          dynamicMaxRetries = Math.max(dynamicMaxRetries, 1000); // Guarantee at least 1000 attempts
+          waitTime = Math.min(waitTime, 1200); // Keep scrolling fast
+          
+          // Super patient stopping conditions for massive conversations
+          if (currentMessageCount >= 1000) {
+            dynamicPatience = Math.max(dynamicPatience, 100); // Ultra patience for 1K+ showing massive signs
+          }
+          
+          console.log(`🔥 MASSIVE CONVERSATION DETECTED: Override engaged for 10K+ message extraction (attempts: ${dynamicMaxRetries}, patience: ${dynamicPatience})`);
+        }
+        
+        // CHECK SCROLL CAPABILITY BEFORE COUNTING ATTEMPT - ENHANCED VERSION
+        const checkScrollCapability = () => {
+          const currentScrollTop = conversationDetailContainer ? conversationDetailContainer.scrollTop : window.pageYOffset;
+          const scrollHeight = conversationDetailContainer ? conversationDetailContainer.scrollHeight : document.documentElement.scrollHeight;
+          const clientHeight = conversationDetailContainer ? conversationDetailContainer.clientHeight : window.innerHeight;
+          
+          // Can we scroll further up?
+          const canScrollUp = currentScrollTop > 5; // More lenient threshold
+          
+          // Did scroll position change from last attempt?
+          const scrollPositionChanged = lastScrollPosition !== currentScrollTop;
+          
+          // ENHANCED: Check if new content is being loaded (height changes)
+          const previousScrollHeight = window.lastScrollHeight || scrollHeight;
+          const contentHeightChanged = Math.abs(scrollHeight - previousScrollHeight) > 10;
+          window.lastScrollHeight = scrollHeight;
+          
+          if (scrollPositionChanged || contentHeightChanged) {
+            lastScrollPosition = currentScrollTop;
+            noScrollChangeCount = 0;
+            if (contentHeightChanged) {
+              console.log(`📏 Content height changed: ${previousScrollHeight} → ${scrollHeight} (${contentHeightChanged ? 'new content loaded' : 'no change'})`);
+            }
+            return true; // Scrolling is working or new content is loading
+          } else {
+            noScrollChangeCount++;
+            
+            // ENHANCED: More patient detection - require multiple failures (OPTIMIZED FOR 10K+)
+            // If we can't scroll up and position hasn't changed for several attempts
+            if (!canScrollUp && noScrollChangeCount >= 15) { // Increased from 8 to 15 for massive conversations
+              console.log(`🛑 SCROLL CAPABILITY: Can't scroll further (position: ${currentScrollTop}, noChange: ${noScrollChangeCount})`);
+              
+              // FINAL CHECK: Try multiple aggressive scrolls to be absolutely sure
+              if (conversationDetailContainer) {
+                const originalTop = conversationDetailContainer.scrollTop;
+                
+                // Try multiple scroll methods as final verification
+                for (let finalAttempt = 0; finalAttempt < 3; finalAttempt++) {
+                  conversationDetailContainer.scrollTop = 0;
+                  conversationDetailContainer.scrollTo({top: 0, behavior: "instant"});
+                  
+                  // Also try parent containers
+                  let parent = conversationDetailContainer.parentElement;
+                  let level = 0;
+                  while (parent && level < 5) { // Increased from 3 to 5 levels
+                    parent.scrollTop = 0;
+                    if (parent.scrollTo) parent.scrollTo({top: 0, behavior: "instant"});
+                    parent = parent.parentElement;
+                    level++;
+                  }
+                  
+                  // Check if any of these changed the position
+                  const newTop = conversationDetailContainer.scrollTop;
+                  if (newTop !== originalTop) {
+                    console.log(`🔄 Final scroll check ${finalAttempt + 1} found movement: ${originalTop} → ${newTop}, continuing...`);
+                    lastScrollPosition = newTop;
+                    noScrollChangeCount = 0;
+                    return true;
+                  }
+                }
+              }
+              return false; // No more scrolling possible after thorough check
+            }
+            
+            // If position hasn't changed for many attempts, likely can't scroll (INCREASED FOR 10K+)
+            if (noScrollChangeCount >= 20) { // Increased from 12 to 20 for massive conversations
+              console.log(`🛑 SCROLL CAPABILITY: No scroll change for ${noScrollChangeCount} attempts`);
+              return false;
+            }
+            
+            return true; // Still might be able to scroll
+          }
+        };
+        
+        // Only increment scroll attempts if we can actually scroll
+        if (checkScrollCapability()) {
+          scrollCapabilityAttempts++;
+          scrollAttempts = scrollCapabilityAttempts; // Keep original variable for compatibility
+        } else {
+          // ENHANCED: Before giving up completely, try more aggressive attempts for 10K+ messages
+          if (totalScrollAttempts < 50) { // Increased from 20 to 50 for massive conversations
+            console.log(`⚠️ SCROLL CAPABILITY: Might be temporary, trying ${50 - totalScrollAttempts} more attempts...`);
+            // Don't count this as a capability attempt, but continue trying
+          } else {
+            // Can't scroll anymore - exit immediately
+            console.log(`✅ SMART STOP: No more scrolling possible after ${scrollCapabilityAttempts} effective attempts (${totalScrollAttempts} total)`);
+            canStillScroll = false;
+            break;
+          }
+        }
         
         // PERFORMANCE-BASED REAL-TIME ADAPTATION: Adjust strategy based on recent performance
         const adaptStrategy = () => {
@@ -1356,8 +1572,8 @@ function exportMessages(settings) {
           }
           
           // DYNAMIC RETRY RECALCULATION - continuously adjust based on performance
-          if (scrollAttempts > 0 && scrollAttempts % 10 === 0) {
-            messagesPerAttempt = currentMessageCount / scrollAttempts;
+          if (scrollCapabilityAttempts > 0 && scrollCapabilityAttempts % 10 === 0) {
+            messagesPerAttempt = currentMessageCount / scrollCapabilityAttempts;
             
             // Recalculate performance score
             if (messagesPerAttempt > 8) {
@@ -1372,27 +1588,7 @@ function exportMessages(settings) {
               performanceScore = 0.6;
             }
             
-            // EXTEND MAX RETRIES if we're still finding messages efficiently
-            if (performanceScore > 1.0 && (scrollAttempts - lastProgressAttempt) < 20) {
-              const extensionFactor = Math.min(2.0, performanceScore);
-              const newMaxRetries = Math.floor(dynamicMaxRetries * extensionFactor);
-              
-              if (newMaxRetries > dynamicMaxRetries) {
-                console.log(`🚀 EXTENDING max retries from ${dynamicMaxRetries} to ${newMaxRetries} (efficient: ${performanceScore.toFixed(2)})`);
-                dynamicMaxRetries = newMaxRetries;
-              }
-            }
-            
-            // REDUCE MAX RETRIES if performance is consistently poor
-            if (performanceScore < 0.7 && (scrollAttempts - lastProgressAttempt) > 15) {
-              const reductionFactor = Math.max(0.7, performanceScore);
-              const newMaxRetries = Math.floor(dynamicMaxRetries * reductionFactor);
-              
-              if (newMaxRetries < dynamicMaxRetries && newMaxRetries > scrollAttempts + 10) {
-                console.log(`⚡ REDUCING max retries from ${dynamicMaxRetries} to ${newMaxRetries} (inefficient: ${performanceScore.toFixed(2)})`);
-                dynamicMaxRetries = newMaxRetries;
-              }
-            }
+            console.log(`� PERFORMANCE UPDATE: ${messagesPerAttempt.toFixed(1)} msg/attempt, score: ${performanceScore.toFixed(2)}`);
           }
           
           // Detect slow loading and adapt
@@ -1420,20 +1616,21 @@ function exportMessages(settings) {
           }
         };
         
-        if (scrollAttempts > 0 && scrollAttempts % 3 === 0) {
+        if (scrollCapabilityAttempts > 0 && scrollCapabilityAttempts % 3 === 0) {
           adaptStrategy();
         }
         
-        // Update progress with dynamic information
-        const dynamicProgressPercent = Math.min(85, (scrollAttempts / dynamicMaxRetries) * 80);
-        const efficiencyInfo = scrollAttempts > 5 ? ` (${messagesPerAttempt.toFixed(1)} msg/attempt)` : '';
+        // Update progress with scroll capability information
+        const scrollProgressPercent = Math.min(85, Math.max(10, (scrollCapabilityAttempts / 20) * 80)); // Dynamic based on actual scroll attempts
+        const efficiencyInfo = scrollCapabilityAttempts > 3 ? ` (${messagesPerAttempt.toFixed(1)} msg/scroll)` : '';
+        const scrollInfo = totalScrollAttempts !== scrollCapabilityAttempts ? ` [${scrollCapabilityAttempts}/${totalScrollAttempts} effective]` : '';
         
         chrome.runtime.sendMessage({
           type: "progress",
-          percent: dynamicProgressPercent,
+          percent: scrollProgressPercent,
           current: currentMessageCount,
           total: currentMessageCount,
-          status: `Loading messages... (${currentMessageCount} found, ${scrollAttempts}/${dynamicMaxRetries} attempts${efficiencyInfo})`,
+          status: `Loading messages... (${currentMessageCount} found messages, scroll attempt ${scrollCapabilityAttempts}${scrollInfo}${efficiencyInfo})`,
         });
 
         // === PERFORMANCE-OPTIMIZED MULTI-METHOD SCROLLING - Prioritize efficient methods ===
@@ -1789,14 +1986,15 @@ function exportMessages(settings) {
         // ADAPTIVE wait time based on current strategy and performance
         await sleep(waitTime);
 
-        // ADDITIONAL: Extra wait for potential lazy loading after initial scroll methods
+        // ADDITIONAL: Extra wait for potential lazy loading after initial scroll methods (ENHANCED FOR 10K+)
         if (aggressionLevel >= 3 && currentMessageCount > 500) {
-          // Additional patience for large conversations that might have lazy loading
+          // Additional patience for large conversations that might have lazy loading (MORE PATIENT FOR 10K+)
           const extraLazyWait = Math.min(
-            currentMessageCount > 5000 ? 1500 : 
-            currentMessageCount > 2000 ? 1200 : 
-            currentMessageCount > 1000 ? 1000 : 500,
-            2000 // Cap at 2 seconds
+            currentMessageCount > 10000 ? 2500 : // 2.5 seconds for ultra-massive
+            currentMessageCount > 5000 ? 2000 :  // 2 seconds for massive
+            currentMessageCount > 2000 ? 1500 : 
+            currentMessageCount > 1000 ? 1200 : 800,
+            3000 // Cap at 3 seconds
           );
           
           console.log(`⏳ Extra lazy loading wait: ${extraLazyWait}ms for potential delayed messages...`);
@@ -1833,18 +2031,20 @@ function exportMessages(settings) {
         
         const isLazyLoading = lazyLoadingIndicators > 0;
         
-        // ENHANCED: Wait for lazy loading with dynamic timeout
+        // ENHANCED: Wait for lazy loading with dynamic timeout (OPTIMIZED FOR 10K+)
         let lazyLoadWaitTime = 0;
         if (isLazyLoading) {
-          // Calculate dynamic wait time based on conversation size
-          if (currentMessageCount > 5000) {
-            lazyLoadWaitTime = 4000; // 4 seconds for massive conversations
+          // Calculate dynamic wait time based on conversation size (MORE PATIENT FOR MASSIVE CONVERSATIONS)
+          if (currentMessageCount > 10000) {
+            lazyLoadWaitTime = 6000; // 6 seconds for ultra-massive conversations
+          } else if (currentMessageCount > 5000) {
+            lazyLoadWaitTime = 5000; // 5 seconds for massive conversations
           } else if (currentMessageCount > 2000) {
-            lazyLoadWaitTime = 3000; // 3 seconds for large conversations
+            lazyLoadWaitTime = 4000; // 4 seconds for large conversations
           } else if (currentMessageCount > 1000) {
-            lazyLoadWaitTime = 2500; // 2.5 seconds for medium conversations
+            lazyLoadWaitTime = 3000; // 3 seconds for medium conversations
           } else {
-            lazyLoadWaitTime = 2000; // 2 seconds for smaller conversations
+            lazyLoadWaitTime = 2500; // 2.5 seconds for smaller conversations
           }
           
           console.log(`⏳ Facebook lazy loading detected, waiting ${lazyLoadWaitTime}ms for messages to load...`);
@@ -1923,42 +2123,63 @@ function exportMessages(settings) {
           consecutiveNoChange = 0;
           currentMessageCount = newMessageCount;
           noProgressStreak = 0;
-          lastProgressAttempt = scrollAttempts; // Track when we last made progress
+          lastProgressAttempt = scrollCapabilityAttempts; // Track when we last made progress using capability attempts
           
           // Calculate message loading rate for adaptation
           messageLoadingRate = newMessages / (loadTime / 1000); // messages per second
           lastSuccessfulMethod = 'extractAndSave'; // Mark extraction as successful method
           
-          // ENHANCED: Provide user feedback for massive conversations with better estimates
-          if (currentMessageCount > 5000) {
+          // ENHANCED: Provide user feedback for massive conversations with better estimates (OPTIMIZED FOR 10K+)
+          if (currentMessageCount > 10000) {
+            // For ultra-massive conversations, provide completion estimates
+            const projectedFinalCount = Math.min(currentMessageCount * 1.2, 50000); // Conservative projection
+            const progressPercent = Math.min(75, (currentMessageCount / projectedFinalCount) * 75);
+            const streamingInfo = streamingSaveCount > 0 ? ` (${streamingSaveCount} files saved)` : '';
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percent: progressPercent,
+              current: currentMessageCount,
+              total: projectedFinalCount,
+              status: `Ultra-massive conversation! Found ${currentMessageCount} messages${streamingInfo} (estimated final: ${Math.floor(projectedFinalCount)})...`,
+            });
+          } else if (currentMessageCount > 5000) {
             // For massive conversations, provide time estimates
-            const messagesPerAttemptCurrent = currentMessageCount / scrollAttempts;
-            const estimatedTotalAttempts = dynamicMaxRetries;
-            const estimatedRemainingTime = (estimatedTotalAttempts - scrollAttempts) * (waitTime / 1000);
-            const etaMinutes = Math.round(estimatedRemainingTime / 60);
+            const messagesPerAttemptCurrent = currentMessageCount / scrollCapabilityAttempts;
+            const streamingInfo = streamingSaveCount > 0 ? ` (${streamingSaveCount} files saved)` : '';
             
             chrome.runtime.sendMessage({
               type: "progress",
-              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              percent: Math.min(80, (scrollCapabilityAttempts / 100) * 80), // No fixed max, so use 100 as reference
               current: currentMessageCount,
               total: currentMessageCount,
-              status: `Loading massive conversation... (${currentMessageCount} messages, ETA: ${etaMinutes}min, ${messagesPerAttemptCurrent.toFixed(1)} msg/attempt)`,
+              status: `Loading massive conversation... (${currentMessageCount} messages${streamingInfo}, ${scrollCapabilityAttempts} scroll attempts, ${messagesPerAttemptCurrent.toFixed(1)} msg/scroll)`,
             });
           } else if (currentMessageCount > 2000) {
+            const streamingInfo = streamingSaveCount > 0 ? ` (${streamingSaveCount} files saved)` : '';
             chrome.runtime.sendMessage({
               type: "progress",
-              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              percent: Math.min(80, (scrollCapabilityAttempts / 50) * 80), // Use 50 as reference for large convos
               current: currentMessageCount,
               total: currentMessageCount,
-              status: `Loading large conversation... (${currentMessageCount} messages, ${scrollAttempts}/${dynamicMaxRetries} attempts)`,
+              status: `Loading large conversation... (${currentMessageCount} messages${streamingInfo}, ${scrollCapabilityAttempts} scroll attempts)`,
             });
-          } else if (currentMessageCount > 100 && scrollAttempts > 10) {
+          } else if (currentMessageCount > 100 && scrollCapabilityAttempts > 5) {
+            const streamingInfo = streamingSaveCount > 0 ? ` (${streamingSaveCount} files saved)` : '';
             chrome.runtime.sendMessage({
               type: "progress",
-              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              percent: Math.min(80, (scrollCapabilityAttempts / 20) * 80), // Use 20 as reference for medium convos
               current: currentMessageCount,
               total: currentMessageCount,
-              status: `Loading conversation... (${currentMessageCount} messages, ${scrollAttempts} attempts)`,
+              status: `Loading conversation... (${currentMessageCount} messages${streamingInfo}, ${scrollCapabilityAttempts} scroll attempts)`,
+            });
+          } else {
+            const streamingInfo = streamingSaveCount > 0 ? ` (${streamingSaveCount} files saved)` : '';
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percent: Math.min(70, (scrollCapabilityAttempts / 30) * 70), // Use 30 as reference for smaller convos
+              current: currentMessageCount,
+              total: currentMessageCount,
+              status: `Loading conversation... (${currentMessageCount} messages${streamingInfo})`,
             });
           }
           
@@ -1969,17 +2190,76 @@ function exportMessages(settings) {
         } else {
           consecutiveNoChange++;
           noProgressStreak++;
+          
+          // ENHANCED: If no progress for several attempts, try extra aggressive scrolling
+          if (consecutiveNoChange >= 3 && consecutiveNoChange % 3 === 0 && scrollCapabilityAttempts > 5) {
+            console.log(`🔍 No progress for ${consecutiveNoChange} attempts, trying extra aggressive scroll...`);
+            
+            // Extra aggressive scroll methods
+            if (conversationDetailContainer) {
+              // Multiple rapid scrolls to top
+              for (let i = 0; i < 8; i++) { // Increased from 5 to 8
+                conversationDetailContainer.scrollTop = 0;
+                conversationDetailContainer.scrollTo({top: 0, behavior: "instant"});
+                await sleep(50); // Reduced sleep time for more attempts
+              }
+              
+              // Try scrolling parent containers more aggressively
+              let parent = conversationDetailContainer.parentElement;
+              let parentLevel = 0;
+              while (parent && parent !== document.body && parentLevel < 8) { // Increased from 5 to 8
+                parent.scrollTop = 0;
+                if (parent.scrollTo) {
+                  parent.scrollTo({top: 0, behavior: "instant"});
+                }
+                // Try additional scroll methods on parents
+                if (parent.scrollBy) {
+                  parent.scrollBy(0, -10000);
+                }
+                parent = parent.parentElement;
+                parentLevel++;
+              }
+            }
+            
+            // Force window scroll with multiple methods
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            window.scrollBy(0, -10000);
+            
+            // Additional aggressive methods for massive conversations
+            if (currentMessageCount > 500) {
+              // Try keyboard events
+              const targetElement = conversationDetailContainer || document.body;
+              for (let i = 0; i < 5; i++) {
+                targetElement.dispatchEvent(new KeyboardEvent("keydown", {
+                  key: "Home", ctrlKey: true, bubbles: true
+                }));
+                targetElement.dispatchEvent(new KeyboardEvent("keydown", {
+                  key: "PageUp", ctrlKey: true, bubbles: true
+                }));
+                await sleep(100);
+              }
+            }
+            
+            // Wait a bit more for potential lazy loading
+            await sleep(1500); // Increased wait time
+            
+            // Try to extract again after aggressive scroll
+            const aggressiveSave = extractAndSaveMessagesToMap(false);
+            const aggressiveNewCount = aggressiveSave.totalInMap;
+            
+            if (aggressiveNewCount > currentMessageCount) {
+              console.log(`✅ Aggressive scroll found ${aggressiveNewCount - currentMessageCount} additional messages!`);
+              currentMessageCount = aggressiveNewCount;
+              consecutiveNoChange = 0; // Reset since we found messages
+              noProgressStreak = 0;
+            }
+          }
         }
 
-        // Update progress with adaptive calculation
-        const progressPercent = Math.min(
-          85,
-          Math.max(
-            (scrollAttempts / maxRetries) * 60 + (currentMessageCount / (currentMessageCount + 50)) * 25,
-            (scrollAttempts / maxRetries) * 85
-          )
-        );
-        updateProgress(progressPercent, currentMessageCount);
+        // Update progress with scroll capability information (already done above in main loop)
+        // No need for additional progress update here since it's handled in the scroll capability check
 
         // ENHANCED stopping condition with SMART early detection and lazy loading awareness
         const shouldStop = () => {
@@ -1995,15 +2275,34 @@ function exportMessages(settings) {
             return false;
           }
           
+          // NEW: If we can't scroll anymore (detected in scroll capability check), stop immediately
+          if (!canStillScroll) {
+            console.log("🛑 SCROLL CAPABILITY: No more scrolling possible - stopping");
+            return true;
+          }
+          
+          // SPECIAL OVERRIDE: For potentially massive conversations, be extra persistent
+          if (currentMessageCount >= 300 && currentMessageCount < 10000) {
+            // This suggests a large conversation, be extra patient
+            if (scrollCapabilityAttempts < 200) { // Much higher threshold for large conversations
+              console.log(`🚀 LARGE CONVERSATION DETECTED (${currentMessageCount} messages) - continuing with high persistence (${scrollCapabilityAttempts}/200 attempts)`);
+              return false; // Keep going!
+            }
+          }
+          
           // PRIORITY: If we can't scroll up anymore (stuck at top), but give extra time for lazy loading
           if (scrollingNotWorking && currentMessageCount > 0) {
             // For very long conversations, be extra patient with lazy loading
-            if (currentMessageCount > 5000 && window.consecutiveAtTop < 8) {
+            if (currentMessageCount > 5000 && window.consecutiveAtTop < 10) { // Increased from 8
               console.log("🏔️ Massive conversation - allowing more time for lazy loading");
               return false;
             }
-            if (currentMessageCount > 2000 && window.consecutiveAtTop < 6) {
+            if (currentMessageCount > 2000 && window.consecutiveAtTop < 8) { // Increased from 6
               console.log("🏔️ Large conversation - allowing more time for lazy loading");
+              return false;
+            }
+            if (currentMessageCount > 500 && window.consecutiveAtTop < 6) { // New threshold for medium-large conversations
+              console.log("🏔️ Medium-large conversation - allowing more time for lazy loading");
               return false;
             }
             console.log("🔝 Can't scroll up anymore and no lazy loading, reached top of conversation");
@@ -2011,62 +2310,69 @@ function exportMessages(settings) {
           }
           
           // ENHANCED: If we're at the top AND no new messages AND scroll not working AND no lazy loading, definitely done
-          if (isAtTop && consecutiveNoChange >= 3 && scrollAttempts >= 5 && !scrollPositionChanged && !isLazyLoading) {
+          if (isAtTop && consecutiveNoChange >= 3 && scrollCapabilityAttempts >= 3 && !scrollPositionChanged && !isLazyLoading) {
             console.log("🔝 At top with no progress, no scroll changes, and no lazy loading - conversation complete");
             return true;
           }
           
           // ENHANCED: Smart early detection for massive conversations (more patient with lazy loading)
-          if (consecutiveNoChange >= 6 && currentMessageCount > 0 && !isLazyLoading) {
+          if (consecutiveNoChange >= 12 && currentMessageCount > 0 && !isLazyLoading) { // Increased from 8 to 12
             // MASSIVE conversations (5k+ messages) - be very patient but still efficient
-            if (currentMessageCount > 5000 && scrollAttempts >= 120 && consecutiveNoChange >= 15) {
-              console.log("🏔️ Massive conversation (5k+) - stopping after extensive attempts");
+            if (currentMessageCount > 5000 && scrollCapabilityAttempts >= 150 && consecutiveNoChange >= 25) { // Increased patience significantly
+              console.log("🏔️ Massive conversation (5k+) - stopping after extensive scroll attempts");
               return true;
             }
             // VERY LARGE conversations (2k+ messages) - be patient
-            if (currentMessageCount > 2000 && scrollAttempts >= 60 && consecutiveNoChange >= 12) {
-              console.log("🏔️ Very large conversation (2k+) - stopping after many attempts");
+            if (currentMessageCount > 2000 && scrollCapabilityAttempts >= 100 && consecutiveNoChange >= 20) { // Increased patience
+              console.log("🏔️ Very large conversation (2k+) - stopping after many scroll attempts");
               return true;
             }
             // LARGE conversations (1k+ messages) - moderate patience
-            if (currentMessageCount > 1000 && scrollAttempts >= 40 && consecutiveNoChange >= 10) {
-              console.log("🏔️ Large conversation (1k+) - stopping after reasonable attempts");
+            if (currentMessageCount > 1000 && scrollCapabilityAttempts >= 60 && consecutiveNoChange >= 15) { // Increased patience
+              console.log("🏔️ Large conversation (1k+) - stopping after reasonable scroll attempts");
               return true;
             }
             // For small conversations (under 50 messages), be more aggressive about stopping
-            if (currentMessageCount < 50 && scrollAttempts >= 8) {
-              console.log("📝 Small conversation - stopping after sufficient attempts");
+            if (currentMessageCount < 50 && scrollCapabilityAttempts >= 10) { // Increased from 8 to 10
+              console.log("📝 Small conversation - stopping after sufficient scroll attempts");
               return true;
             }
             // For medium conversations (50-200 messages), stop after more attempts
-            if (currentMessageCount < 200 && scrollAttempts >= 15 && consecutiveNoChange >= 8) {
-              console.log("📝 Medium conversation - stopping after extended attempts");
+            if (currentMessageCount < 200 && scrollCapabilityAttempts >= 20 && consecutiveNoChange >= 12) { // Increased patience
+              console.log("📝 Medium conversation - stopping after extended scroll attempts");
+              return true;
+            }
+            // For conversations 200-1000 messages
+            if (currentMessageCount >= 200 && currentMessageCount < 1000 && scrollCapabilityAttempts >= 40 && consecutiveNoChange >= 12) {
+              console.log("📝 Large-medium conversation - stopping after extended scroll attempts");
               return true;
             }
           }
           
           // ENHANCED: If scroll position isn't changing AND no new messages AND no lazy loading, we're stuck
-          if (!scrollPositionChanged && consecutiveNoChange >= 5 && scrollAttempts >= 8 && !isLazyLoading) {
+          if (!scrollPositionChanged && consecutiveNoChange >= 10 && scrollCapabilityAttempts >= 10 && !isLazyLoading) { // Increased thresholds even more
             console.log("🔒 Scroll position stuck, no new messages, and no lazy loading - likely complete");
             return true;
           }
           
-          // ENHANCED: Dynamic patience for massive conversations (accounting for lazy loading delays)
-          let dynamicPatience = Math.min(patienceLevel + 3, 15); // Default cap at 15, increased for lazy loading
-          if (currentMessageCount > 5000) {
-            dynamicPatience = 25; // Maximum patience for massive conversations (10k+)
+          // ENHANCED: Dynamic patience for massive conversations (accounting for lazy loading delays) - ULTRA PATIENT FOR 10K+
+          let dynamicPatience = Math.min(patienceLevel + 8, 25); // Increased base patience even more
+          if (currentMessageCount > 10000) {
+            dynamicPatience = 60; // ULTRA maximum patience for ultra-massive conversations (10k+)
+          } else if (currentMessageCount > 5000) {
+            dynamicPatience = 50; // Maximum patience for massive conversations
           } else if (currentMessageCount > 2000) {
-            dynamicPatience = 22; // Very high patience for very large conversations
+            dynamicPatience = 40; // Very high patience for very large conversations  
           } else if (currentMessageCount > 1000) {
-            dynamicPatience = 18; // High patience for large conversations
+            dynamicPatience = 35; // High patience for large conversations
           } else if (currentMessageCount > 500) {
-            dynamicPatience = 15; // Good patience for moderate conversations
+            dynamicPatience = 30; // Good patience for moderate conversations
           } else if (currentMessageCount > 200) {
-            dynamicPatience = 12; // Medium patience for long conversations
+            dynamicPatience = 25; // Medium patience for long conversations
           } else if (currentMessageCount > 100) {
-            dynamicPatience = 10; // Medium patience for medium conversations
+            dynamicPatience = 20; // Medium patience for medium conversations
           } else {
-            dynamicPatience = 6; // Lower patience for small conversations
+            dynamicPatience = 15; // Higher patience for small conversations too
           }
           
           // Basic patience exceeded (with dynamic patience)
@@ -2075,27 +2381,21 @@ function exportMessages(settings) {
             return true;
           }
           
-          // ENHANCED: No progress for extended period suggests conversation is fully loaded
-          const maxNoProgressStreak = Math.min(dynamicPatience * 2, currentMessageCount > 5000 ? 40 : 25);
+          // ENHANCED: No progress for extended period suggests conversation is fully loaded (MORE LENIENT FOR 10K+)
+          const maxNoProgressStreak = Math.min(dynamicPatience * 2, currentMessageCount > 10000 ? 80 : currentMessageCount > 5000 ? 60 : 40);
           if (noProgressStreak >= maxNoProgressStreak && !isLazyLoading) {
             console.log(`📈 No progress streak too long (${noProgressStreak}/${maxNoProgressStreak}) and no lazy loading - stopping`);
             return true;
           }
           
-          // Max attempts reached (now dynamic and performance-based)
-          if (scrollAttempts >= dynamicMaxRetries) {
-            console.log(`🏁 Reached dynamic max retries (${dynamicMaxRetries}) based on performance`);
-            return true;
-          }
-          
-          // PERFORMANCE-BASED: If efficiency is very low and we've tried enough, stop
-          if (scrollAttempts >= 20 && performanceScore < 0.5 && (scrollAttempts - lastProgressAttempt) > 20) {
+          // PERFORMANCE-BASED: If efficiency is very low and we've tried enough, stop (MORE LENIENT FOR 10K+)
+          if (scrollCapabilityAttempts >= 50 && performanceScore < 0.3 && (scrollCapabilityAttempts - lastProgressAttempt) > 40) { // Increased thresholds and lowered performance threshold more
             console.log(`⚡ Very low efficiency (${performanceScore.toFixed(2)}) with no recent progress - stopping`);
             return true;
           }
           
-          // SMART: If we've been scrolling a lot and message rate is very low, probably done (but not during lazy loading)
-          if (scrollAttempts >= 15 && messageLoadingRate < 0.1 && consecutiveNoChange >= 5 && !isLazyLoading) {
+          // SMART: If we've been scrolling a lot and message rate is very low, probably done (but not during lazy loading) (MORE LENIENT FOR 10K+)
+          if (scrollCapabilityAttempts >= 40 && messageLoadingRate < 0.02 && consecutiveNoChange >= 15 && !isLazyLoading) { // Increased thresholds and lowered rate threshold more
             return true;
           }
           
@@ -2106,10 +2406,11 @@ function exportMessages(settings) {
           break;
         }
 
-        scrollAttempts++;
+        // No need to increment scrollAttempts here since we're using scrollCapabilityAttempts
+        // scrollAttempts is only incremented when we can actually scroll
 
         // ADAPTIVE special methods based on performance and aggression
-        if (scrollAttempts % Math.max(2, 6 - aggressionLevel) === 0) {
+        if (scrollCapabilityAttempts % Math.max(2, 6 - aggressionLevel) === 0) {
          
 
           // Message-specific scrolling
@@ -2155,7 +2456,7 @@ function exportMessages(settings) {
         }
 
         // ADAPTIVE focus clicking based on performance
-        if (scrollAttempts % Math.max(3, 8 - aggressionLevel) === 0 && aggressionLevel >= 3) {
+        if (scrollCapabilityAttempts % Math.max(3, 8 - aggressionLevel) === 0 && aggressionLevel >= 3) {
           
           if (conversationDetailContainer) {
             const clickX = containerRect.left + containerRect.width / 2;
@@ -2237,8 +2538,24 @@ function exportMessages(settings) {
 
       const finalCount = messageMap.size;
       
+      // STREAMING SAVE: Save any remaining buffered messages
+      if (streamingBuffer.length > 0) {
+        console.log(`📦 FINAL STREAMING SAVE: Saving remaining ${streamingBuffer.length} messages...`);
+        saveStreamingData();
+      }
+      
+      // Log final scroll capability statistics
+      console.log(`📊 SCROLL CAPABILITY STATS:
+        💬 Messages extracted: ${finalCount}
+        📜 Effective scroll attempts: ${scrollCapabilityAttempts}
+        🔄 Total attempts (including non-scrollable): ${totalScrollAttempts}
+        ⚡ Efficiency: ${scrollCapabilityAttempts > 0 ? (finalCount / scrollCapabilityAttempts).toFixed(1) : 'N/A'} messages per scroll
+        🎯 Scroll success rate: ${totalScrollAttempts > 0 ? ((scrollCapabilityAttempts / totalScrollAttempts) * 100).toFixed(1) : 'N/A'}%
+        🚀 Smart stopping: ${canStillScroll ? 'Manual stop' : 'Auto-detected completion'}
+        📁 Streaming files saved: ${streamingSaveCount}
+      `);
 
-      return { finalCount, userRequestedStop };
+      return { finalCount, userRequestedStop, scrollCapabilityAttempts, totalScrollAttempts };
     }
 
     // Simple extraction of text content only from conversation in original order
@@ -2257,6 +2574,8 @@ function exportMessages(settings) {
         const scrollResult = await performAdvancedScroll();
         const totalScrolledMessages = scrollResult.finalCount;
         const wasStoppedByUser = scrollResult.userRequestedStop;
+        const effectiveScrollAttempts = scrollResult.scrollCapabilityAttempts;
+        const totalAttempts = scrollResult.totalScrollAttempts;
 
         chrome.runtime.sendMessage({
           type: "progress",
@@ -2441,14 +2760,31 @@ function exportMessages(settings) {
         a.click();
         URL.revokeObjectURL(url);
 
-        // Send completion message
+        // Send completion message with scroll capability stats
         const exportStatus = wasStoppedByUser ? "stopped by user" : "completed automatically";
+        const scrollEfficiency = effectiveScrollAttempts > 0 ? (totalMessages / effectiveScrollAttempts).toFixed(1) : 'N/A';
+        const scrollSuccessRate = totalAttempts > 0 ? ((effectiveScrollAttempts / totalAttempts) * 100).toFixed(1) : 'N/A';
+        
+        // Final save remaining streaming buffer
+        if (streamingBuffer.length > 0) {
+          saveStreamingData();
+        }
+        
+        const streamingInfo = streamingSaveCount > 0 ? ` Also saved ${streamingSaveCount} streaming files during extraction.` : '';
+        
         chrome.runtime.sendMessage({
           type: "complete",
           totalMessages: totalMessages,
           filename: filename,
           participants: ["YOU", getConversationPartnerName() || "OTHER PERSON"],
-          status: exportStatus,
+          status: exportStatus + streamingInfo,
+          scrollStats: {
+            effectiveScrolls: effectiveScrollAttempts,
+            totalAttempts: totalAttempts,
+            efficiency: scrollEfficiency,
+            successRate: scrollSuccessRate,
+            streamingSaves: streamingSaveCount
+          }
         });
 
       } catch (error) {
@@ -2493,6 +2829,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       message.current || message.total || 0
     } messages found`;
     showStatus(statusText, "info");
+  } else if (message.type === "streamingSave") {
+    // Handle streaming save notifications
+    const statusText = `💾 Streaming save: ${message.filename} (${message.messageCount} messages, total saved: ${message.totalSaved})`;
+    showStatus(statusText, "success");
+    console.log(`📦 Streaming save: ${message.filename}`);
   } else if (message.type === "complete") {
     const filename = message.filename || "messenger_chat.txt";
     const participants = message.participants
