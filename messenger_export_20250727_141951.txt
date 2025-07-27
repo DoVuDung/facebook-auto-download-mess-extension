@@ -1,0 +1,485 @@
+Test connection from popup
+===================================================
+Facebook Messenger Export - 7/27/2025, 2:19:51 PM
+UNKNOWN: Mẹ BắpYou an attachment. · 4h
+UNKNOWN: Hội Gymer DataHouseLê: Vũ giỡn á mà · 13m
+UNKNOWN: Torben Vagn Rudgaardcool · 1h
+UNKNOWN: Indigo VietnamHi Dũng! Please let us know how we can help you. · 1h
+UNKNOWN: Làm IT tại ĐứcLàm IT tại ĐứcBảo Lân: Học để có chút kiến thức biết keywords, còn làm ra tiền thì tự bản thân thôi · 1h
+UNKNOWN: CMP-SAA-K22Đinh: Đáp án sai: B: hợp lí, tuy nhiên tốn công cài và config DataSync C: Đắt tiền và thừa thãi khi migrate quá ít data chỉ tầm 100gb như này D: IPSec VPN là để connect đến VPC chứ không connect đến S3 · 4h
+UNKNOWN: Trần NguyênYou: lần đầu làm cũng hơi rén · 5h
+UNKNOWN: Nhan DangReacted with to your message · 5h
+UNKNOWN: Khánh Vân · 15h
+UNKNOWN: Mạnh ViệtAi rồi cũng có lần đầu · 16h
+UNKNOWN: California Fitness & Yoga Centers VietnamChào bạn, bạn đang quan tâm thẻ tập 299K mua 1 tặng 1 · 20h
+UNKNOWN: Son TranYou: okok Sơn ơi, tui cảm ơn · 23h
+UNKNOWN: Cộng đồng Rust Việt NamCộng Đồng LẬP TRÌNH Rust VNĐiệp: Ai chơi k · 2d
+UNKNOWN: Thảo NguyễnYou: · 2d
+UNKNOWN: Tai HuynhDạ, em có 2 jobs này, anh xem cv nào phù hợp mình có thể gửi CV qua mess hoặc email ạ · 3d
+UNKNOWN: Duong ThuyMessages and calls are secured with end-to-end encryption. · 5d
+UNKNOWN: Lê Viết SinhMệt quá · 5d
+UNKNOWN: Thiệnok. cảm ơn D nghe · 6d
+UNKNOWN: Phụ Kiện MacbookMình cần thêm gì nữa ko để em tư vấn thêm · 1w
+UNKNOWN: Thủy TaHyHi em, c gửi em JD Fullstack Dev bên c nha · 1w
+UNKNOWN: John NguyễnYou: kiểu làm remote đc ko a · 1w
+UNKNOWN: Kylie HuynhReacted with to your message · 1w
+UNKNOWN: Ly NguyenYou: dạ em cảm ơn chị · 1w
+UNKNOWN: Loading...
+UNKNOWN [10:37 ]: Today at AM10:37 AM
+YOU SENT: How about your test, TorbenEnter
+UNKNOWN [12:37 ]: Today at PM12:37 PM
+TORBEN: Morning AndyEnter
+UNKNOWN: TorbenI will test nowEnter
+YOU SENT: thanks TorbenEnter
+TORBEN: ahhhh crap haha - it ran for 5 mins with NO errors at all....
+UNKNOWN: TorbenThen facebook stopped loading messages (bad internet I guess)
+UNKNOWN: TorbenUncaught (in promise) Error: Could not establish connection. Receiving end does not exist. This 100% means your chrome.runtime.sendMessage(...) call is firing but nothing is listening anymore.
+UNKNOWN: Torbendamn heheEnter
+UNKNOWN: TorbenAndy - lets say it scrolls up 700 messages and then stop for some reason Can I then scroll up manually and start the extention again? is that possible?
+UNKNOWN: TorbenAdd a “ping” handler in background.js chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => { if (msg.action === 'ping') { sendResponse({ alive: true }); } });
+UNKNOWN: TorbenThen your content script can do: try { const check = await chrome.runtime.sendMessage({ action: 'ping' }); if (!check?.alive) throw new Error('Dead listener'); } catch (e) { console.warn(" Background not listening"); }
+YOU SENT: let's me checkEnter
+TORBEN: Anyway I am available any time
+YOU REPLIED TO TORBEN: Original message:Andy - lets say it scrolls up 700 messages and then stop for some reaso…You can scroll manuallyEnter
+TORBEN: coolEnter
+--- Export Completed ---
+YOU: Loading...
+Exported: 7/27/2025, 2:24:14 PM
+TORBEN: Andy Torben TorbenMorning Andy
+I WILL TEST NOW: Will test now Torben TorbenI will test now
+Facebook Messenger Conversation Export
+==================================================
+--- Today at 12:37 PM12:37 PM ---
+THEN FACEBOOK STOPPED LOADING MESSAGES: Facebook stopped loading messages (bad internet I guess) Torben TorbenThen facebook stopped loading messages (bad internet I guess)
+YOU SENT: Torben
+TORBEN: Crap haha - it ran for 5 mins with NO errors at all.... Torben Torbenahhhh crap haha - it ran for 5 mins with NO errors at all....
+YOU: Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist. This 100% means your chrome.runtime.sendMessage(...) call is firing but nothing is listening anymore. Torben TorbenUncaught (in promise) Error: Could not establish connection. Receiving end does not exist. This 100% means your chrome.runtime.sendMessage(...) call is firing but nothing is listening anymore.
+YOU: Andy - lets say it scrolls up 700 messages and then stop for some reason Can I then scroll up manually and start the extention again? is that possible? Torben TorbenAndy - lets say it scrolls up 700 messages and then stop for some reason Can I then scroll up manually and start the extention again? is that possible?
+YOU: A “ping” handler in background.js chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => { if (msg.action === 'ping') { sendResponse({ alive: true }); } }); Torben TorbenAdd a “ping” handler in background.js chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => { if (msg.action === 'ping') { sendResponse({ alive: true }); } });
+YOU: Your content script can do: try { const check = await chrome.runtime.sendMessage({ action: 'ping' }); if (!check?.alive) throw new Error('Dead listener'); } catch (e) { console.warn(" Background not listening"); } Torben TorbenThen your content script can do: try { const check = await chrome.runtime.sendMessage({ action: 'ping' }); if (!check?.alive) throw new Error('Dead listener'); } catch (e) { console.warn(" Background not listening"); }
+YOU SENT: let's me check
+YOU REPLIED TO TORBEN: Scroll manually You replied to Torben Andy - lets say it scrolls up 700 messages and then stop for some reaso… You replied to TorbenOriginal message:Andy - lets say it scrolls up 700 messages and then stop for some reaso…You can scroll manually Original message:Andy - lets say it scrolls up 700 messages and then stop for some reaso… Original message:
+TORBEN: Torben Torbencool
+--- Today at 2:21 PM2:21 PM ---
+TORBEN: Luck with fixing it? Torben TorbenAny luck with fixing it?
+TORBEN: Andy
+TORBEN: Will test now
+YOU: Torben
+YOU: Crap haha - it ran for 5 mins with NO errors at all....
+YOU: Facebook stopped loading messages (bad internet I guess)
+TORBEN: Hehe
+YOU: let's me check
+TORBEN: I am available any time
+YOU: Scroll manually
+TORBEN: cool
+TORBEN: Luck with fixing it?
+--- Today at 1:24 AM1:24 AM ---
+TORBEN: // background.js chrome.runtime.onMessage.addListener((message, sender, sendResponse) => { console.log(" BG received:", message); // Always respond (even if empty) if you use return true sendResponse({ received: true }); // Return true if response will be async (e.g. after fetch) return false; }); Torben Torben// background.js chrome.runtime.onMessage.addListener((message, sender, sendResponse) => { console.log(" BG received:", message); // Always respond (even if empty) if you use return true sendResponse({ received: true }); // Return true if response will be async (e.g. after fetch) return false; });
+TORBEN: Means that facebook or chrome removed something cause "it took too long" so we just put it in again and continue Torben TorbenThis means that facebook or chrome removed something cause "it took too long" so we just put it in again and continue
+YOU: Says try { const response = await chrome.runtime.sendMessage({ type: 'ping' }); console.log('Response:', response); } catch (err) { console.error(' sendMessage failed:', err); } Torben TorbenGPT says try { const response = await chrome.runtime.sendMessage({ type: 'ping' }); console.log('Response:', response); } catch (err) { console.error(' sendMessage failed:', err); }
+YOU: anyway - tell your AI to help you with "Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist." Torben Torbenanyway - tell your AI to help you with "Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist."
+883 LINES BEFORE IT BROKE: Torben883 lines before it broke
+I ALREADY SEND YOU A NEW VERSION IN UPWORK, TORBEN: Already send you a new version in Upwork, Torben
+YOU REPLIED TO TORBEN: Error occurs when the popup tries to send messages to the content script but the content script isn't loaded or the tab context has changed. This is a common issue with Chrome extensions. Let me fix this by adding proper error handling and connection validation. You replied to Torben anyway - tell your AI to help you with "Uncaught (in promise) Error: C… You replied to TorbenOriginal message:anyway - tell your AI to help you with "Uncaught (in promise) Error: C…This error occurs when the popup tries to send messages to the content script but the content script isn't loaded or the tab context has changed. This is a common issue with Chrome extensions. Let me fix this by adding proper error handling and connection validation. Original message:anyway - tell your AI to help you with "Uncaught (in promise) Error: C… Original message:
+YOU SENT: About your test, Torben
+TORBEN: Torben TorbenYes
+V1.0.9: sentv1.0.9
+GOOD NIGHT, TORBEN: Night, Torben
+GO SLEEP: Sleep Torben TorbenGo sleep
+--- Today at 10:37 AM10:37 AM ---
+YOU: // background.js chrome.runtime.onMessage.addListener((message, sender, sendResponse) => { console.log(" BG received:", message); // Always respond (even if empty) if you use return true sendResponse({ received: true }); // Return true if response will be async (e.g. after fetch) return false; });
+YOU: Means that facebook or chrome removed something cause "it took too long" so we just put it in again and continue
+TORBEN: 883 lines before it broke
+YOU: Already you a new version in Upwork, Torben
+YOU: v1.0.9
+YOU: Error occurs when the popup tries to messages to the content script but the content script isn't loaded or the tab context has changed. This is a common issue with Chrome extensions. Let me fix this by adding proper error handling and connection validation.
+YOU: , I think I'm sleeping too much now, can I fix you feedback at 9AM
+TORBEN: Yes
+TORBEN: Sleep
+YOU: Night, Torben
+YOU: About your test, Torben
+--- Today at 1:11 AM1:11 AM ---
+TORBEN: Cool code!!! Torben Torbenvery cool code!!!
+YOU SENT: Me to fix some ui, make it more UI UX
+SMALL AND NOT TOO COMPLEX: And not too complex
+YOU REPLIED TO TORBEN: To Torben My big PC CPU Intel Core i9-14900K (24 cores, 32 threads, 6.0GHz boost)… Original message:My big PC CPU Intel Core i9-14900K (24 cores, 32 threads, 6.0GHz boost)… Original message:
+YOU SENT: Thanks for you support
+TORBEN: Think thats why it works so well on my BIG PC Torben TorbenI think thats why it works so well on my BIG PC
+TORBEN: Lets keep this one easier Torben Torbenno lets keep this one easier
+TORBEN: We make this facebook messenger extractor perfect - then perhaps I can start selling it - then I will BUY you a core 9i Torben Torbenif we make this facebook messenger extractor perfect - then perhaps I can start selling it - then I will BUY you a core 9i
+YOU SENT: Don't have enough money Torben, so that reason I work OT now :sad
+TORBEN: Look here Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist. (after 500 messages it crash and stop) This is because you do not have a background.js Torben TorbenAndy look here Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist. (after 500 messages it crash and stop) This is because you do not have a background.js
+YOU: // In manifest.json "background": { "service_worker": "background.js" } Torben Torben// In manifest.json "background": { "service_worker": "background.js" }
+TORBEN: Cool code!!!
+YOU: Thanks for you support
+TORBEN: Think thats why it works so well on my BIG PC
+TORBEN: Lets keep this one easier
+YOU: Me to fix some ui, make it more UI UX
+YOU: Am OCD about this
+TORBEN: And not too complex
+YOU: Big PC CPU Intel Core i9-14900K (24 cores, 32 threads, 6.0GHz boost) RAM 64GB DDR5-6000MHz GPU NVIDIA RTX 4090 24GB Its a BEAST my big PC
+YOU: Dream ...
+YOU: We make this facebook messenger extractor perfect - then perhaps I can start selling it - then I will BUY you a core 9i
+YOU: Don't have enough money Torben, so that reason I work OT now :sad
+YOU: Look here Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist. (after 500 messages it crash and stop) This is because you do not have a background.js
+TORBEN: // In manifest.json "background": { "service_worker": "background.js" }
+--- Today at 12:39 AM12:39 AM ---
+YOU SENT: Extension context is being invalidated during the long-running scroll process. This happens when Chrome reloads the extension or when the content script runs for too long. Let me fix this by adding proper error handling and context validation
+TORBEN: Please do Torben TorbenYes please do
+V1.0.8: sentv1.0.8
+TORBEN: One more thing - remove your BIIIIG popup interface - and remove all the code we no longer need. Instead you add this Torben Torbenand one more thing - remove your BIIIIG popup interface - and remove all the code we no longer need. Instead you add this
+SO I CAN DECIDE THE SCROLL DELAY: I can decide the scroll delay (depending a LOT on internet speed and computer speed) Torben Torbenso I can decide the scroll delay (depending a LOT on internet speed and computer speed)
+TORBEN: One you start it - then it switch to this Torben TorbenAnd one you start it - then it switch to this
+YOU REPLIED TO TORBEN: Torben You replied to Torben so I can decide the scroll delay (depending a LOT on internet speed and computer speed) You replied to TorbenOriginal message:so I can decide the scroll delay (depending a LOT on internet speed and computer speed)ok Torben Original message:so I can decide the scroll delay (depending a LOT on internet speed and computer speed) Original message:
+ANY VALIDATE ABOUT THIS?: Validate about this?
+SO YOU CAN CLICK START AND STOP: You can click START and STOP Torben Torbenso you can click START and STOP
+TORBEN: Sleep delay between scrolling .- we can trick facebook - by making it random like this function getRandomScrollDelay(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; } // later, use like this: const delay = getRandomScrollDelay( parseInt(document.getElementById('delayMin').value), parseInt(document.getElementById('delayMax').value) ); await sleep(delay); Torben TorbenThe sleep delay between scrolling .- we can trick facebook - by making it random like this function getRandomScrollDelay(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; } // later, use like this: const delay = getRandomScrollDelay( parseInt(document.getElementById('delayMin').value), parseInt(document.getElementById('delayMax').value) ); await sleep(delay);
+YOU SENT: Let me invest this one
+ONLY VERY FEW ERRORS NOW: VERY few errors now Torben TorbenOnly VERY few errors now
+TORBEN: Me check the one me Torben Torbenlet me check the one me
+TORBEN: yes - but only happens very rare Torben Torbenyes - but only happens very rare
+IT SAVED A LOT OF MESSAGES!!!: Saved a LOT of messages!!! Torben Torbenit saved a LOT of messages!!!
+YOU: Extension context is being invalidated during the long-running scroll process. This happens when Chrome reloads the extension or when the content script runs for too long. Let me fix this by adding proper error handling and context validation
+TORBEN: Please do
+YOU: v1.0.8
+YOU: One more thing - remove your BIIIIG popup interface - and remove all the code we no longer need. Instead you add this
+YOU: I can decide the scroll delay (depending a LOT on internet speed and computer speed)
+YOU: Validate about this?
+TORBEN: One you start it - then it switch to this
+TORBEN: You can click START and STOP
+YOU: Let me invest this one
+YOU: Sleep delay between scrolling .- we can trick facebook - by making it random like this function getRandomScrollDelay(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; } // later, use like this: const delay = getRandomScrollDelay( parseInt(document.getElementById('delayMin').value), parseInt(document.getElementById('delayMax').value) ); await sleep(delay);
+TORBEN: Me check the one you me
+TORBEN: VERY few errors now
+TORBEN: yes - but only happens very rare
+TORBEN: Saved a LOT of messages!!!
+TORBEN: YESSSSSSSSSSSSSSSSSSSSSSS Torben TorbenYESSSSSSSSSSSSSSSSSSSSSSS
+TORBEN: CORS now Torben Torbenfixing CORS now
+YOU SENT: ya
+TORBEN: VM5693:17 GET http://127.0.0.1:3010/saveTxt.js?txt=YOU%3A%20Skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der%20You%20sent%20You%20sentJeg%20skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der net::ERR_FAILED 200 (OK) sendLineToLocalServer @ VM5693:17 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439Understand this error VM5693:23 âŒ Failed to save to API: TypeError: Failed to fetch at sendLineToLocalServer (<anonymous>:17:7) at extractAndSaveMessagesToMap (<anonymous>:540:19) at performAdvancedScroll (<anonymous>:1760:33) at async extractAllMessages (<anonymous>:2210:30) (anonymous) @ VM5693:23 Promise.catch sendLineToLocalServer @ VM5693:22 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439 /messages/e2ee/t/7542360299178347:1 Access to fetch at 'http://127.0.0.1:3010/saveTxt.js?txt=YOU%20SENT%3A%20Holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting%20You%20sent%20You%20sentJeg%20holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting' from origin 'https://www.facebook.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. 127.0.0.1 Torben sorry VM5693:17 GET http://127.0.0.1:3010/saveTxt.js?txt=YOU%3A%20Skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der%20You%20sent%20You%20sentJeg%20skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der net::ERR_FAILED 200 (OK) sendLineToLocalServer @ VM5693:17 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439Understand this error VM5693:23 âŒ Failed to save to API: TypeError: Failed to fetch at sendLineToLocalServer (<anonymous>:17:7) at extractAndSaveMessagesToMap (<anonymous>:540:19) at performAdvancedScroll (<anonymous>:1760:33) at async extractAllMessages (<anonymous>:2210:30) (anonymous) @ VM5693:23 Promise.catch sendLineToLocalServer @ VM5693:22 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439 /messages/e2ee/t/7542360299178347:1 Access to fetch at 'http://127.0.0.1:3010/saveTxt.js?txt=YOU%20SENT%3A%20Holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting%20You%20sent%20You%20sentJeg%20holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting' from origin 'https://www.facebook.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.127.0.0.1 http://127.0.0.1:3010/saveTxt.js?txt=YOU%3A%20Skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der%20You%20sent%20You%20sentJeg%20skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der http://127.0.0.1:3010/saveTxt.js?txt=YOU%20SENT%3A%20Holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting%20You%20sent%20You%20sentJeg%20holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting https://www.facebook.com Torbensorry VM5693:17 GET http://127.0.0.1:3010/saveTxt.js?txt=YOU%3A%20Skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der%20You%20sent%20You%20sentJeg%20skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der net::ERR_FAILED 200 (OK) sendLineToLocalServer @ VM5693:17 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439Understand this error VM5693:23 âŒ Failed to save to API: TypeError: Failed to fetch at sendLineToLocalServer (<anonymous>:17:7) at extractAndSaveMessagesToMap (<anonymous>:540:19) at performAdvancedScroll (<anonymous>:1760:33) at async extractAllMessages (<anonymous>:2210:30) (anonymous) @ VM5693:23 Promise.catch sendLineToLocalServer @ VM5693:22 extractAndSaveMessagesToMap @ VM5693:540 performAdvancedScroll @ VM5693:1760 await in performAdvancedScroll extractAllMessages @ VM5693:2210 clearDOM @ VM5693:2437 exportMessages @ VM5693:2 (anonymous) @ VM5693:2439 /messages/e2ee/t/7542360299178347:1 Access to fetch at 'http://127.0.0.1:3010/saveTxt.js?txt=YOU%20SENT%3A%20Holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting%20You%20sent%20You%20sentJeg%20holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting' from origin 'https://www.facebook.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.127.0.0.1
+DO YOU HAVE TRY/CATCH ?: You have try/catch ? Torben TorbenDo you have try/catch ?
+YOU SENT: But the font is break
+TORBEN: Is what you have to do - hang on Torben Torbenhere is what you have to do - hang on
+HTTP: http://127.0.0.1:3010/saveTxt.js?txt=YOU%3A%20Skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der%20You%20sent%20You%20sentJeg%20skal%20lige%20ha%20Bee%20til%20at%20kontakte%20hende%20cafe%20ejeren%20der http://127.0.0.1:3010/saveTxt.js?txt=YOU%20SENT%3A%20Holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting%20You%20sent%20You%20sentJeg%20holder%20dig%20opdateret%20hvis%20der%20sker%20flere%20ting https://www.facebook.com
+TORBEN: CORS now
+YOU: ya
+TORBEN: YESSSSSSSSSSSSSSSSSSSSSSS
+TORBEN: Yeah!!! - it works - its streaming text like crazy
+YOU: But the font is break
+YOU: Andy it still gives some errors like this Facebook lazy loading detected, waiting 2000ms for messages to load... VM6274:2408 Uncaught (in promise) Error: Extension context invalidated. at extractAllMessages (<anonymous>:2408:24) extractAllMessages @ VM6274:2408Understand this error 15VM6274:20 âœ… API Response: Saved. maw_proxy_page/:1 Error handling response: Error: runtime/sendMessage: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received at chrome-extension://fdjamakpfbbddfjaooikfcpapjohcfmg/content/contentScripts/kwift.CHROME.js:1:184385Understand this error
+TORBEN: Is what you have to do - hang on
+TORBEN: You have try/catch ?
+YOU SENT: Facebook – log in or sign up
+TORBEN: Do you want? Torben Torbenwhat do you want?
+YOU SENT: About popup code
+YOU SENT: It's so hard for this enhancement Sent You sentIt's so hard for this enhancementSent
+YOU: { "manifest_version": 3, "name": "Facebook Messenger Chat Exporter", "description": "Export Facebook Messenger conversations to text files with one click", "version": "1.0.7", "permissions": ["scripting", "activeTab", "downloads", "storage"], "action": { "default_popup": "popup.html", "default_title": "Export Messenger Chat" }, "host_permissions": [ "https://www.facebook.com/*", "https://messenger.com/*", "http://127.0.0.1:3010/*" ], "content_scripts": [ { "matches": [ "https://www.facebook.com/messages/*", "https://www.facebook.com/t/*", "https://messenger.com/*" ], "js": ["content.js"], "run_at": "document_idle" } ], "icons": { "16": "icon16.svg", "48": "icon48.svg", "128": "icon128.svg" } }
+TORBEN: Do you want?
+YOU: About popup code
+YOU: It's so hard for this enhancement
+--- Yesterday at 11:09 PM ---
+YOU SENT: Do try my best
+YOU SENT: Updated some in popup.js
+TORBEN: The extension It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost thats ALL I want Torben Torbenclick the extension It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost It scrolls up Facebook Messenger It sends each message line to localhost thats ALL I want
+--- Yesterday at 11:54 PM ---
+YOU SENT [11:56 PM]: Facebook – log in or sign up Esc Skip to Details and Actions Message sent Yesterday at 11:56 PM by You
+ARE YOU HERE?: You here?
+CAN I SEND YOU TO TEST: I send you to test
+YOU SENT: popup.txt 102.82 KB popup.txt102.82 KB
+TORBEN: ok? Torben Torbenok?
+YOU SENT: Is manifest.json
+SHOULD I REPLACE YOURS?: I replace yours? Torben Torbenshould I replace yours?
+PLEASE HELP ME THIS ONE: Help me this one
+SO I SEND YOU A TXT: I send you a txt
+CAUSE FACEBOOK NOT ALLOW ME TO SEND JS FILE: Facebook not allow me to send js file
+PLEASE COPY AND REPLACE IT: Copy and replace it
+YOU: Do try my best
+YOU: You here?
+YOU: Updated some in popup.js
+YOU: I you to test
+YOU: Is manifest.json
+TORBEN: ok?
+TORBEN: I replace yours?
+YOU: Help me this one
+YOU: Facebook not allow me to js file
+YOU: I you a txt
+YOU: Copy and replace it
+TORBEN: NO!!!!!!!!!!!!!!!! Torben TorbenNO!!!!!!!!!!!!!!!!
+YOU: Andy??? - Then lets say it scrolls back and reads 100,000 messages but it crashes at 100,001 Torben TorbenWTF Andy??? - Then lets say it scrolls back and reads 100,000 messages but it crashes at 100,001
+THIS FUNCTION: Function
+TORBEN: Let me check Torben Torbenok let me check
+I MEAN FOR RUNNING IN BACKGROUND: Mean for running in background Sent You sentI mean for running in backgroundSent
+YOU SENT: It's so hard for this enhancement
+YOU: Andy??? - Then lets say it scrolls back and reads 100,000 messages but it crashes at 100,001
+TORBEN: NO!!!!!!!!!!!!!!!!
+YOU: Function
+TORBEN: Let me check
+YOU: Mean for running in background
+IT'S ISSUE FROM SCROLL: sentit's issue from scrollSent
+I MEAN FOR RUNNING IN BACKGROUND: Mean for running in background
+YOU: it's issue from scroll
+YOU SENT: Export, leave the extension open, and wait for it to download successfullyou click export, leave the extension open, and wait for it to download successfully
+--- Yesterday at 9:45 PM ---
+LET ME THINK SOLUTION FOR RUNNING A BACKGROUND JOB: Me think solution for running a background job
+HTTPS: https://facebook-auto-download-mess-extensi-rose.vercel.app/USER_GUIDE.html#troubleshooting Facebook Messenger Exporter - User Guide https://facebook-auto-download-mess-extensi-rose.vercel.app/USER_GUIDE.html#troubleshootingFacebook Messenger Exporter - User Guide
+--- Yesterday at 10:03 PM ---
+THIS IS USER GUIDE ALSO TORBEN: Is user guide also Torben
+THAT IS WHY I IMPLEMENT THE EXTENSION FOR YOU: Is why I implement the extension for you
+TORBEN: Cant you write each line using browser extention? Torben Torbenwhy cant you write each line using browser extention?
+YOU: "browser extensions don’t have direct access to your hard drive — due to security restrictions" Ahhh Torben Torben"browser extensions don’t have direct access to your hard drive — due to security restrictions" Ahhh
+TORBEN: Extention dont have access Torben TorbenYes extention dont have access
+YOU SENT: nope, it's separate file save
+TORBEN: But... you can call my API A. Browser script (inject via DevTools console or extension): Scrolls back Grabs chat DOM nodes Sends chat lines via WebSocket or local server call B. Local Node.js server: Listens for incoming lines from browser Appends them immediately to a .txt file (E.g., Robin_chat_log.txt) Torben TorbenBut... you can call my API A. Browser script (inject via DevTools console or extension): Scrolls back Grabs chat DOM nodes Sends chat lines via WebSocket or local server call B. Local Node.js server: Listens for incoming lines from browser Appends them immediately to a .txt file (E.g., Robin_chat_log.txt)
+TORBEN: DONE! - and it works Torben TorbenDONE! - and it works
+TORBEN: Me write an API in nodejs which you can call with the messages Torben TorbenLet me write an API in nodejs which you can call with the messages
+YOU SENT: Is you API ?
+GIVE ME 10 MINS: Me 10 mins
+TORBEN: Torben1:41
+I WILL SHOW YOU HOW: Will show you how Torben TorbenI will show you how
+YOU SENT: Like a senior You sentyou look like a senior
+HTTP: SaveLine(text) { if (window.proxy && !window.proxy.closed) { window.proxy.postMessage(text, "*"); } else { window.proxy = window.open("http://127.0.0.1:3010/writeProxy.html", "_blank"); setTimeout(() => window.proxy.postMessage(text, "*"), 1000); } } 127.0.0.1 Torben function saveLine(text) { if (window.proxy && !window.proxy.closed) { window.proxy.postMessage(text, "*"); } else { window.proxy = window.open("http://127.0.0.1:3010/writeProxy.html", "_blank"); setTimeout(() => window.proxy.postMessage(text, "*"), 1000); } }127.0.0.1 http://127.0.0.1:3010/writeProxy.html Torbenfunction saveLine(text) { if (window.proxy && !window.proxy.closed) { window.proxy.postMessage(text, "*"); } else { window.proxy = window.open("http://127.0.0.1:3010/writeProxy.html", "_blank"); setTimeout(() => window.proxy.postMessage(text, "*"), 1000); } }127.0.0.1
+TORBEN: Should look more like this function sendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); } 127.0.0.1 Torben Yours should look more like this function sendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); }127.0.0.1 http://127.0.0.1:3010/saveTxt.js?txt= TorbenYours should look more like this function sendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); }127.0.0.1
+AFTER YOUR FORMATTING ETC...: Your formatting etc...
+YOU: Then you do... messages.forEach(msg => { const line = msg.innerText.trim(); if (line) sendLineToLocalServer(line); }); Torben TorbenAnd then you do... messages.forEach(msg => { const line = msg.innerText.trim(); if (line) sendLineToLocalServer(line); });
+YOU: Export, leave the extension open, and wait for it to download successfully
+YOU: let's me think about streaming data for you
+YOU: I'm not sure about support from Google
+YOU: Me think solution for running a background job
+YOU: Streaming for the save file, it's will be a separate file from the part, not combined into one file
+YOU: Function runs background just by combining with a streaming file function
+YOU: Is user guide also Torben
+YOU: Is why I implement the extension for you
+HTTPS: https://facebook-auto-download-mess-extensi-rose.vercel.app/USER_GUIDE.html#troubleshooting
+YOU: nope, it's separate file save
+TORBEN: Cant you write each line using browser extention?
+YOU: Mean for streaming data on save file function
+TORBEN: Extention dont have access
+YOU: But... you can call my API A. Browser script (inject via DevTools console or extension): Scrolls back Grabs chat DOM nodes Sends chat lines via WebSocket or local server call B. Local Node.js server: Listens for incoming lines from browser Appends them immediately to a .txt file (E.g., Robin_chat_log.txt)
+YOU: Me write an API in nodejs which you can call with the messages
+YOU: Is you API ?
+TORBEN: Me 10 mins
+TORBEN: DONE! - and it works
+TORBEN: Will show you how
+YOU: Like a senior
+HTTP: http://127.0.0.1:3010/writeProxy.html
+HTTP: http://127.0.0.1:3010/saveTxt.js?txt=
+TORBEN: Then you do... messages.forEach(msg => { const line = msg.innerText.trim(); if (line) sendLineToLocalServer(line); });
+TORBEN: Your formatting etc...
+--- Yesterday at 9:38 PM ---
+YOU SENT: Yes 100% about your expect
+TORBEN: You do that yes or no? Torben Torbencan you do that yes or no?
+ANYWAY I WILL BE BACK IN 30 MINS: I will be back in 30 mins Torben Torbenanyway I will be back in 30 mins
+TORBEN: I will leave extention running (I do on my big computer - its super fast with 1GB memory) Torben Torbenand I will leave extention running (I do on my big computer - its super fast with 1GB memory)
+RIGHT NOW IM ON THE SMALL COMPUTER: Now im on the small computer
+YOU SENT: The extension run background the facebook will detect,
+THAT IS THE REASON I IMPLEMENT THIS ONE: Is the reason I implement this one
+YOU: Fix this so we get Read line Write line Read line Write line Read line Write line Torben Torbenplease fix this so we get Read line Write line Read line Write line Read line Write line
+AND SHOW THE ERROR: Show the error
+ALSO THIS IS THE LIMIT FOR THIS EXTENSION: This is the limit for this extension
+I ALREADY TRY MY BEST ALSO TORBEN: Already try my best also Torben
+THIS IS POPUP I MENTIONED: Is popup i mentioned
+FACEBOOK THINK IT'S HACKING: Think it's hacking
+THE CORRECT BEHAVIOR FOR THIS EXTENSION IS,: Correct behavior for this extension is,
+YOU: Export, leave the extension open, and wait for it to download successfullyou click export, leave the extension open, and wait for it to download successfully
+TORBEN: You do that yes or no?
+YOU: Yes 100% about your expect
+YOU: I will leave extention running (I do on my big computer - its super fast with 1GB memory)
+TORBEN: Now im on the small computer
+TORBEN: I will be back in 30 mins
+TORBEN: Fix this so we get line Write line line Write line line Write line
+YOU: The extension run background the facebook will detect,
+YOU: Show the error
+YOU: Is the reason I implement this one
+YOU: Think it's hacking
+YOU: Is popup i mentioned
+YOU: This is the limit for this extension
+YOU: Already try my best also Torben
+YOU: Correct behavior for this extension is,
+UNDERSTAND?: Torbenunderstand?
+HTTPS: At this https://www.youtube.com/watch?v=qSEhVmiSXc8 2025 07 26 21 33 41 Torben Look at this https://www.youtube.com/watch?v=qSEhVmiSXc82025 07 26 21 33 41 https://www.youtube.com/watch?v=qSEhVmiSXc8 TorbenLook at this https://www.youtube.com/watch?v=qSEhVmiSXc82025 07 26 21 33 41
+YOU SENT: Read about this
+TORBEN: Dont care Torben TorbenII dont care
+YOU SENT: Is an extension please
+YOU: This Read line Read line Read line Read line Read line Read line Read line Write txt file Torben TorbenYou do this Read line Read line Read line Read line Read line Read line Read line Write txt file
+YOU STILL DO NOT DO AS I WANT: Do NOT do as I want Torben Torbenyou still do NOT do as I want
+TORBEN: agree??? Torben Torbenagree???
+CAN YOU DO THAT YES OR NO?: You do that yes or no?
+TORBEN: Want Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Torben TorbenI want Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line
+HTTPS: https://www.youtube.com/watch?v=qSEhVmiSXc8
+TORBEN: understand?
+YOU: About this
+TORBEN: Dont care
+TORBEN: Do NOT do as I want
+TORBEN: This line line line line line line line Write txt file
+YOU: Is an extension please
+TORBEN: agree???
+TORBEN: Want line Write line line Write line line Write line line Write line line Write line line Write line
+--- Today at 12:44 PM12:44 PM ---
+Exported: 7/27/2025, 2:31:08 PM
+IT'S ISSUE FROM SCROLL: sentit's issue from scroll
+--- Today at 1:27 AM1:27 AM ---
+TORBEN: 883 lines before it broke Torben Torben883 lines before it broke
+YOU SENT: v1.0.8
+--- Today at 12:48 AM12:48 AM ---
+YOU SENT: About you send me you api code
+SO I CAN TEST FIRST: I can test first
+YOU JUST HAVE TO CALL IT: Just have to call it
+TORBEN: Everything and send on upwork Torben TorbenZip everything and send on upwork
+NOT TAKE TIME FOR YOU: Take time for you
+TORBEN: Code works fine Torben TorbenAPI code works fine
+YOU SENT: okok
+TORBEN: Everything and on upwork
+YOU: About you me you api code
+YOU: I can test first
+YOU: Take time for you
+TORBEN: Code works fine
+TORBEN: Have to call it
+YOU: okok
+--- Yesterday at 11:05 PM ---
+TORBEN: Too much code Torben TorbenWAAAAY too much code
+YOU WASTE YOUR TIME AND MINE: Waste your time and mine
+YOU: I want: I click the extension → It scrolls up Facebook Messenger → It sends each message line to localhost → Done. Torben TorbenWhat I want: I click the extension → It scrolls up Facebook Messenger → It sends each message line to localhost → Done.
+I THOUGHT 200$ MORE THINGS I NEED TO DO: Thought 200$ more things I need to do
+NOTHING MORE: More
+YOU: You read my specification - the PDF I sent you when you started? Torben Torbendid you read my specification - the PDF I sent you when you started?
+TORBEN: Never asked for all that crap Torben TorbenI never asked for all that crap
+WASTE OF TIME: Of time
+YOU: Click the extension → It scrolls up Facebook Messenger → It sends each message line to localhost → Done. Im gonna start developing that right now Lets see how fast I can do this Torben TorbenI click the extension → It scrolls up Facebook Messenger → It sends each message line to localhost → Done. Im gonna start developing that right now Lets see how fast I can do this
+IF YOU BEAT ME - THEN I PAY YOU THE $200: You beat me - then I pay you the $200 Torben Torbenif you beat me - then I pay you the $200
+TORBEN: Try and keep up Torben Torbenyou can try and keep up
+TORBEN: Too much code
+TORBEN: Your time and mine
+YOU: You my specification - the PDF I you when you started?
+TORBEN: More
+YOU: Thought 200$ more things I need to do
+TORBEN: Never asked for all that crap
+TORBEN: Of time
+TORBEN: Try and keep up
+TORBEN: You beat me - then I pay you the $200
+HTTP: 127.0.0.1 Torben http://127.0.0.1:3010/
+OHH ANDY - ONE MORE THING I FORGOT....: Andy - one more thing I forgot.... Torben TorbenOhh Andy - one more thing I forgot....
+YOU MUST ADD THIS TO YOUR MANIFEST.JSON: Add this to your manifest.json Torben TorbenYOU must add this to your manifest.json
+TORBEN: Part is very important for your extention "host_permissions": [ "http://127.0.0.1:3010/*" ] 127.0.0.1 Torben This part is very important for your extention "host_permissions": [ "http://127.0.0.1:3010/*" ]127.0.0.1 http://127.0.0.1:3010/ TorbenThis part is very important for your extention "host_permissions": [ "http://127.0.0.1:3010/*" ]127.0.0.1
+LET'S ME CONFIRM SOMETHING: sentlet's me confirm something
+YES YOU HAVE TO CALL MY API: You have to call my API Torben Torbenyes you have to call my API
+YOU WANT ME TO RUN THE EXTENSION: Me to run the extension You sentYou want me to run the extension
+YOU: Run the function you send me in the devtool console right?
+TORBEN: Cause the API is running locally on my PC Torben TorbenNo cause the API is running locally on my PC
+YOU SENT: You understand my question?
+I MEAN: Mean
+YOU: Required you run this api when using extension also
+HTTP: SendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); } 127.0.0.1 Torben function sendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); }127.0.0.1 http://127.0.0.1:3010/saveTxt.js?txt= Torbenfunction sendLineToLocalServer(text) { fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text)) .then((res) => res.text()) .then(console.log) .catch((err) => console.error(" Failed to save:", err)); }127.0.0.1
+YOU: Will send the output file to your node API, right?
+YOU SENT: About I will send all things to the API at once time
+ALL IS LOST!: Is lost! Torben TorbenALL is lost!
+YOU CANNOT UNDERSTAND THAT?: Understand that? Torben TorbenYou cannot understand that?
+TORBEN: What - if you cannot understand how to send one line at a time to a function - then we have to stop Torben TorbenYou know what - if you cannot understand how to send one line at a time to a function - then we have to stop
+LET ME SEE YOUR CODE: Me see your code
+YOU SENT: Ok
+YOU SENT: By line mess, and send to your api
+TORBEN: Do you store the lines? Torben Torbenwhere do you store the lines?
+TORBEN: Is popup.js so big? Torben Torbenwhy is popup.js so big?
+IN CONTENTS.JS?: Contents.js?
+AND POPUP.JS: Popup.js
+YOU SENT: exportMessages
+TORBEN: Andy - you made all this popup crap that I never asked for Torben TorbenAndy - you made all this popup crap that I never asked for
+WAAAAY TOO MUCH CODE: Too much code Torben TorbenWAAAAY too much code
+HTTP: http://127.0.0.1:3010/
+TORBEN: Andy - one more thing I forgot....
+TORBEN: Add this to your manifest.json
+YOU: Me to run the extension
+YOU: let's me confirm something
+YOU: Run the function you me in the devtool console right?
+TORBEN: You have to call my API
+TORBEN: Cause the API is running locally on my PC
+YOU: You understand my question?
+YOU: Mean
+YOU: Will the output file to your node API, right?
+YOU: About I will all things to the API at once time
+TORBEN: Is lost!
+TORBEN: Understand that?
+YOU: Ok
+YOU: What - if you cannot understand how to one line at a time to a function - then we have to stop
+TORBEN: Me see your code
+YOU: By line mess, and to your api
+TORBEN: Do you store the lines?
+TORBEN: Contents.js?
+YOU: Popup.js
+TORBEN: Is popup.js so big?
+TORBEN: Will bet you I could write the same in less than 50 lines
+YOU: exportMessages
+YOU: Andy - you made all this popup crap that I never asked for
+--- Yesterday at 10:15 PM ---
+YOU: Typing
+--- Yesterday at 9:36 PM ---
+TORBEN: This Read line Read line Read line Read line Read line Read line Read line Write txt file Torben TorbenYou do this Read line Read line Read line Read line Read line Read line Read line Write txt file
+YOU: Want Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Torben TorbenI want Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line Read line Write line
+YOU: If it crash after 5000 lines, then I STILL have the txt file Torben TorbenSo if it crash after 5000 lines, then I STILL have the txt file
+YOU: If it crash after 5000 lines, then I STILL have the txt file
+--- Yesterday at 9:27 PM ---
+TORBEN: AFTER I stop the export Torben TorbenYes AFTER I stop the export
+YOU SENT: let's me help you
+YOU SENT: Thumbs-up sign
+TORBEN: Let me show you Torben Torbenok let me show you
+CAN I CONTROL YOU SCREEN NOW: I control you screen now
+I FIND THE TXT FILE: Find the txt file
+SAVE ALL MESS FROM COVERSATION DETAIL TO TXT FILE: All mess from coversation detail to txt file
+THEN I GET A TXT FILE: I get a txt file Torben Torbenthen I get a txt file
+YOU SENT: Do you mean Torben ?
+I ALREADY IMPLEMENT FROM YOUR FEEBACK: Already implement from your feeback
+THATS NOT WHAT I WANT!!!: NOT WHAT I WANT!!!
+READ LINE - WRITE LINE: Line - Write line Torben TorbenRead line - Write line
+TORBEN: ARGH!!!! Torben TorbenARGH!!!!
+YOU DO NOT UNDERSTAND THAT?: Do not understand that?
+YOU SENT: Yes 100%
+TORBEN: Let me show you
+YOU: let's me help you
+YOU: I control you screen now
+YOU: Find the txt file
+TORBEN: AFTER I stop the export
+TORBEN: I get a txt file
+TORBEN: NOT WHAT I WANT!!!
+YOU: Do you mean Torben ?
+YOU: Already implement from your feeback
+YOU: All mess from coversation detail to txt file
+TORBEN: ARGH!!!!
+TORBEN: line - Write line
+TORBEN: Not understand that?
+YOU: Yes 100%
+YOU SENT: You send me a screen shot
+YOU SENT: I think from you
+PLEASE CALM DOWN: Calm down
+YOU SENT: Download setting in chrome
+TORBEN: Screenshot of what? Torben Torbena screenshot of what?
+--- Yesterday at 9:26 PM ---
+TORBEN: Pissed off Torben TorbenIm pissed off
+STILL NO FILES!!!: No files!!! Torben TorbenStill no files!!!
+YOU REPLIED TO YOURSELF: This You replied to yourself You replied to yourselflike this
+WHEN WILL THE TXT FILE BE THERE?: Will the txt file be there?
+ITS AT 800 MESSAGES IN THE BROWSER NOW: At 800 messages in the browser now
+THERE SHOULD BE A TXT FILE WITH 800 LINES: Should be a txt file with 800 lines
+YOU SENT: Think it's issue from you side
+TORBEN: Is it? Torben Torbenwhere is it?
+YOU SENT: Me
+YOU: I think from you
+YOU: Calm down
+TORBEN: Pissed off
+YOU: You me a screen shot
+TORBEN: Screenshot of what?
+YOU: Download setting in chrome
+YOU: This
+TORBEN: No files!!!
+TORBEN: Will the txt file be there?
+TORBEN: At 800 messages in the browser now
+TORBEN: Should be a txt file with 800 lines
+YOU: Think it's issue from you side
+TORBEN: Is it?
+YOU: Me
+Exported: 7/27/2025, 2:46:09 PM
+YOU SENT: Deloy scroll, I mean you can scroll manually, and I already cover about scroll, so I would like to remove delay scroll You sentTorben for deloy scroll, I mean you can scroll manually, and I already cover about scroll, so I would like to remove delay scroll
+TORBEN: Torben TorbenOkie
+IS IT OK ?: It ok ?Sent
+TORBEN: Okie
+YOU: Deloy scroll, I mean you can scroll manually, and I already cover about scroll, so I would like to remove delay scroll
+YOU: It ok ?
+--- Today at 1:29 AM1:29 AM ---

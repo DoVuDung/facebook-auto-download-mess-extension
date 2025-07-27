@@ -93,23 +93,6 @@ async function startExport() {
   };
 
   try {
-    // Clear any existing duplicate tracking before starting
-    await chrome.scripting.executeScript({
-      target: { tabId: currentTab.id },
-      function: () => {
-        // Reset global duplicate tracking
-        if (window.contentHashSet) {
-          window.contentHashSet.clear();
-          console.log("🧹 Cleared duplicate tracking hash set");
-        }
-        if (window.processedElementIds) {
-          window.processedElementIds.clear();
-          console.log("🧹 Cleared processed element IDs");
-        }
-        console.log("🚀 Starting fresh export with clean duplicate tracking");
-      }
-    });
-
     await chrome.scripting.executeScript({
       target: { tabId: currentTab.id },
       function: exportMessages,
@@ -141,23 +124,15 @@ function exportMessages(settings) {
     const messages = [];
     let totalMessages = 0;
     
-    // CLEAN INITIALIZATION: Reset all duplicate tracking
-    console.log("🧹 Initializing clean duplicate tracking...");
-    
     // MAP-BASED progressive message collection with chronological ordering
     const messageMap = new Map(); // Use Map to prevent duplicates and maintain order
     const processedElementIds = new Set(); // Track processed DOM elements
     let messageIndex = 0; // Global index for ordering
     const dateOrder = new Map(); // Track date order for proper chronological sorting
 
-    // Reset global duplicate tracking variables
-    window.contentHashSet = new Set(); // Fresh hash set for this session
-    window.processedElementIds = new Set(); // Fresh element tracking
-    
-    console.log("✅ Clean state initialized");
     console.log("Settings:", settings);
 
-    // Function to send one line at a time to local server API with error handling
+    // Function to send one line at a time to local server API
     function sendLineToLocalServer(text) {
       fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text))
         .then((res) => res.text())
@@ -166,35 +141,7 @@ function exportMessages(settings) {
         })
         .catch((err) => {
           console.error("❌ Failed to save to API:", err);
-          // Don't throw error, just log it to avoid stopping the process
         });
-    }
-
-    // Safe function to send progress updates with error handling
-    function safeUpdateProgress(percent, current, total, status) {
-      try {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({
-            type: "progress",
-            percent: percent,
-            current: current,
-            total: total,
-            status: status,
-          });
-        }
-      } catch (error) {
-        console.log("Progress update failed (extension context may be invalidated):", error.message);
-        // Continue execution even if progress updates fail
-      }
-    }
-
-    // Check if extension context is still valid
-    function isExtensionContextValid() {
-      try {
-        return !!(typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id);
-      } catch (error) {
-        return false;
-      }
     }
 
     // Function to dismiss Facebook privacy popups and overlays
@@ -273,7 +220,12 @@ function exportMessages(settings) {
 
     // Send progress updates back to popup
     function updateProgress(percent, current) {
-      safeUpdateProgress(percent, current, totalMessages, `Processing messages... ${current || 0} found`);
+      chrome.runtime.sendMessage({
+        type: "progress",
+        percent: percent,
+        current: current,
+        total: totalMessages,
+      });
     }
 
     // PROGRESSIVE MAP-BASED: Extract and save messages to Map continuously
@@ -601,52 +553,64 @@ function exportMessages(settings) {
                 // Create unique message key for Map
                 const messageKey = `${messageData.sender}_${messageData.content.substring(0, 100)}_${messageIndex}`;
                 
-                // ENHANCED duplicate check with better logic
+                // OPTIMIZED duplicate check for massive conversations (10k+ messages)
                 let isDuplicate = false;
                 const currentContentLower = messageData.content.toLowerCase().trim();
                 
-                // Create content hash for all conversations
-                const contentHash = `${messageData.sender}_${currentContentLower.substring(0, 100)}`;
-                
-                // Initialize hash set if needed
-                if (!window.contentHashSet) window.contentHashSet = new Set();
-                
-                // STEP 1: Fast hash-based duplicate check first
-                if (window.contentHashSet.has(contentHash)) {
-                  isDuplicate = true;
-                  console.log(`🔄 Hash-based duplicate detected: "${messageData.content.substring(0, 50)}..."`);
+                // For massive conversations, use hash-based quick lookup instead of full iteration
+                if (messageMap.size > 1000) {
+                  // Create content hash for faster duplicate detection
+                  const contentHash = `${messageData.sender}_${currentContentLower.substring(0, 100)}`;
+                  
+                  // Check if we've seen this exact content hash before
+                  if (!window.contentHashSet) window.contentHashSet = new Set();
+                  
+                  if (window.contentHashSet.has(contentHash)) {
+                    isDuplicate = true;
+                    console.log(`🔄 Hash-based duplicate detected: "${messageData.content.substring(0, 50)}..."`);
+                  } else {
+                    // Add to hash set for future lookups
+                    window.contentHashSet.add(contentHash);
+                    
+                    // For very large conversations, only check exact matches (skip similarity check)
+                    if (messageMap.size > 5000) {
+                      // Skip similarity check for performance
+                    } else {
+                      // Check similarity only against recent messages (last 100) for performance
+                      const recentMessages = Array.from(messageMap.values()).slice(-100);
+                      for (const existingMsg of recentMessages) {
+                        if (existingMsg.sender === messageData.sender) {
+                          const existingContentLower = existingMsg.content.toLowerCase().trim();
+                          const similarity = calculateContentSimilarity(currentContentLower, existingContentLower);
+                          if (similarity > 0.9) {
+                            console.log(`🔄 Found similar content (${(similarity * 100).toFixed(1)}% match), skipping: "${messageData.content.substring(0, 50)}..."`);
+                            isDuplicate = true;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                  }
                 } else {
-                  // STEP 2: Check against existing messages in Map for exact matches
+                  // Original logic for smaller conversations
                   for (const [key, existingMsg] of messageMap.entries()) {
                     // Exact content and sender match
                     if (existingMsg.content === messageData.content && 
                         existingMsg.sender === messageData.sender) {
                       isDuplicate = true;
-                      console.log(`🔄 Exact duplicate found in Map: "${messageData.content.substring(0, 50)}..."`);
                       break;
                     }
-                  }
-                  
-                  // STEP 3: For smaller conversations, also check similarity
-                  if (!isDuplicate && messageMap.size <= 5000) {
-                    // Check similarity only against recent messages for performance
-                    const recentMessages = Array.from(messageMap.values()).slice(-100);
-                    for (const existingMsg of recentMessages) {
-                      if (existingMsg.sender === messageData.sender) {
-                        const existingContentLower = existingMsg.content.toLowerCase().trim();
-                        const similarity = calculateContentSimilarity(currentContentLower, existingContentLower);
-                        if (similarity > 0.95) { // Increased threshold to reduce false positives
-                          console.log(`🔄 Found similar content (${(similarity * 100).toFixed(1)}% match), skipping: "${messageData.content.substring(0, 50)}..."`);
-                          isDuplicate = true;
-                          break;
-                        }
+                    
+                    // Check for very similar content (90% similarity) from same sender
+                    if (existingMsg.sender === messageData.sender) {
+                      const existingContentLower = existingMsg.content.toLowerCase().trim();
+                      const similarity = calculateContentSimilarity(currentContentLower, existingContentLower);
+                      if (similarity > 0.9) {
+                        console.log(`🔄 Found similar content (${(similarity * 100).toFixed(1)}% match), skipping: "${messageData.content.substring(0, 50)}..."`);
+                        isDuplicate = true;
+                        break;
                       }
                     }
-                  }
-                  
-                  // STEP 4: Only add to hash set if NOT a duplicate
-                  if (!isDuplicate) {
-                    window.contentHashSet.add(contentHash);
                   }
                 }
 
@@ -986,24 +950,15 @@ function exportMessages(settings) {
         .replace(/^\s*EDITED\b:?\s*/gi, "") // Remove "EDITED" at beginning
         .replace(/\bSEND\s*$/gi, "") // Remove "SEND" at end
         .replace(/^\s*You sent\b:?\s*/gi, "") // Remove "You sent" at beginning
-        .replace(/\bYou sent\b/gi, "") // Remove "You sent" anywhere
         .replace(/\bDelivered\s*$/gi, "") // Remove "Delivered" at end
         .replace(/\bSeen\s*$/gi, "") // Remove "Seen" at end
         .replace(/\bRead\s*$/gi, "") // Remove "Read" at end
         .replace(/\s+/g, " ")
         .trim();
 
-      // Stage 2: Remove obvious concatenated sender names and fix duplicate patterns
+      // Stage 2: Remove obvious concatenated sender names only at the beginning
       cleanContent = cleanContent
         .replace(/^(TORBEN|YOU|OTHER PERSON)\s*:?\s*/gi, "")
-        // Fix patterns like "Hello You sentHello" -> "Hello"
-        .replace(/(.+?)\s+You sent\s*\1/gi, "$1")
-        // Fix patterns like "YOU SENT: Text You sent You sentText" -> "Text"
-        .replace(/^YOU SENT:\s*(.+?)\s+You sent\s+You sent\s*\1.*$/gi, "$1")
-        // Remove repeated text patterns like "Text You sent You sentText"
-        .replace(/^(.+?)\s+You sent\s+You sent\s*\1.*$/gi, "$1")
-        // Clean up any remaining "You sent" variations
-        .replace(/\bYou sent\s+/gi, "")
         .replace(/^([A-Z]+)\s+([a-z])/gi, (match, possibleSender, nextChar) => {
           // If it looks like "SARAHello there", convert to "Hello there" 
           if (possibleSender.length <= 15 && possibleSender !== cleanContent) {
@@ -1011,7 +966,6 @@ function exportMessages(settings) {
           }
           return match;
         })
-        .replace(/\s+/g, " ")
         .trim();
 
       // Stage 3: Only handle the most obvious mixed UI content
@@ -1384,18 +1338,17 @@ function exportMessages(settings) {
       const messageListener = (message, sender, sendResponse) => {
         if (message.type === "stopScrolling") {
           userRequestedStop = true;
-          safeUpdateProgress(90, currentMessageCount, currentMessageCount, "User stopped - preparing export...");
+          chrome.runtime.sendMessage({
+            type: "progress",
+            percent: 90,
+            current: currentMessageCount,
+            total: currentMessageCount,
+            status: "User stopped - preparing export...",
+          });
         }
       };
       
-      // Safe listener registration
-      try {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-          chrome.runtime.onMessage.addListener(messageListener);
-        }
-      } catch (error) {
-        console.log("Could not register message listener (extension context issue):", error.message);
-      }
+      chrome.runtime.onMessage.addListener(messageListener);
       
       // DEBUG: Start scrolling immediately to test
       
@@ -1405,12 +1358,6 @@ function exportMessages(settings) {
 
       while (scrollAttempts < dynamicMaxRetries && !userRequestedStop) {
         const startTime = Date.now();
-        
-        // Check if extension context is still valid, but continue anyway
-        if (!isExtensionContextValid()) {
-          console.log("⚠️ Extension context invalidated, but continuing with message extraction...");
-          // Don't break, just log and continue
-        }
         
         // PERFORMANCE-BASED REAL-TIME ADAPTATION: Adjust strategy based on recent performance
         const adaptStrategy = () => {
@@ -1509,12 +1456,13 @@ function exportMessages(settings) {
         const dynamicProgressPercent = Math.min(85, (scrollAttempts / dynamicMaxRetries) * 80);
         const efficiencyInfo = scrollAttempts > 5 ? ` (${messagesPerAttempt.toFixed(1)} msg/attempt)` : '';
         
-        safeUpdateProgress(
-          dynamicProgressPercent,
-          currentMessageCount,
-          currentMessageCount,
-          `Loading messages... (${currentMessageCount} found messages, ${scrollAttempts}/${dynamicMaxRetries} attempts${efficiencyInfo})`
-        );
+        chrome.runtime.sendMessage({
+          type: "progress",
+          percent: dynamicProgressPercent,
+          current: currentMessageCount,
+          total: currentMessageCount,
+          status: `Loading messages... (${currentMessageCount} found messages, ${scrollAttempts}/${dynamicMaxRetries} attempts${efficiencyInfo})`,
+        });
 
         // === PERFORMANCE-OPTIMIZED MULTI-METHOD SCROLLING - Prioritize efficient methods ===
 
@@ -1930,12 +1878,13 @@ function exportMessages(settings) {
           console.log(`⏳ Facebook lazy loading detected, waiting ${lazyLoadWaitTime}ms for messages to load...`);
           
           // Update progress to show lazy loading wait
-          safeUpdateProgress(
-            Math.min(80, (scrollAttempts / maxRetries) * 80),
-            currentMessageCount,
-            currentMessageCount,
-            `Waiting for Facebook to load more messages... (${currentMessageCount} found)`
-          );
+          chrome.runtime.sendMessage({
+            type: "progress",
+            percent: Math.min(80, (scrollAttempts / maxRetries) * 80),
+            current: currentMessageCount,
+            total: currentMessageCount,
+            status: `Waiting for Facebook to load more messages... (${currentMessageCount} found)`,
+          });
           
           await sleep(lazyLoadWaitTime);
           
@@ -2016,26 +1965,29 @@ function exportMessages(settings) {
             const estimatedRemainingTime = (estimatedTotalAttempts - scrollAttempts) * (waitTime / 1000);
             const etaMinutes = Math.round(estimatedRemainingTime / 60);
             
-            safeUpdateProgress(
-              Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
-              currentMessageCount,
-              currentMessageCount,
-              `Loading massive conversation... (${currentMessageCount} messages, ETA: ${etaMinutes}min, ${messagesPerAttemptCurrent.toFixed(1)} msg/attempt)`
-            );
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              current: currentMessageCount,
+              total: currentMessageCount,
+              status: `Loading massive conversation... (${currentMessageCount} messages, ETA: ${etaMinutes}min, ${messagesPerAttemptCurrent.toFixed(1)} msg/attempt)`,
+            });
           } else if (currentMessageCount > 2000) {
-            safeUpdateProgress(
-              Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
-              currentMessageCount,
-              currentMessageCount,
-              `Loading large conversation... (${currentMessageCount} messages, ${scrollAttempts}/${dynamicMaxRetries} attempts)`
-            );
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              current: currentMessageCount,
+              total: currentMessageCount,
+              status: `Loading large conversation... (${currentMessageCount} messages, ${scrollAttempts}/${dynamicMaxRetries} attempts)`,
+            });
           } else if (currentMessageCount > 100 && scrollAttempts > 10) {
-            safeUpdateProgress(
-              Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
-              currentMessageCount,
-              currentMessageCount,
-              `Loading conversation... (${currentMessageCount} messages, ${scrollAttempts} attempts)`
-            );
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percent: Math.min(80, (scrollAttempts / dynamicMaxRetries) * 80),
+              current: currentMessageCount,
+              total: currentMessageCount,
+              status: `Loading conversation... (${currentMessageCount} messages, ${scrollAttempts} attempts)`,
+            });
           }
           
           // Optimize for successful methods
@@ -2322,13 +2274,25 @@ function exportMessages(settings) {
       try {
         // Show initial progress
         updateProgress(5, 0);
-        safeUpdateProgress(10, 0, 0, "Starting dynamic scrolling to load all messages...");
+        chrome.runtime.sendMessage({
+          type: "progress",
+          percent: 10,
+          current: 0,
+          total: 0,
+          status: "Starting dynamic scrolling to load all messages...",
+        });
 
         const scrollResult = await performAdvancedScroll();
         const totalScrolledMessages = scrollResult.finalCount;
         const wasStoppedByUser = scrollResult.userRequestedStop;
 
-        safeUpdateProgress(85, messageMap.size, messageMap.size, `Processing ${messageMap.size} messages from Map...`);
+        chrome.runtime.sendMessage({
+          type: "progress",
+          percent: 85,
+          current: messageMap.size,
+          total: messageMap.size,
+          status: `Processing ${messageMap.size} messages from Map...`,
+        });
 
         // Since scrolling up collects newest messages first, we need to reverse the order
         // to get the proper Facebook-like ordering (oldest to newest)
@@ -2352,18 +2316,11 @@ function exportMessages(settings) {
           updateProgress(100, totalMessages);
         } else {
           
-          try {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-              chrome.runtime.sendMessage({
-                type: "error",
-                error:
-                  "No messages found. Make sure you are viewing a conversation with messages.",
-              });
-            }
-          } catch (error) {
-            console.log("Failed to send no messages error:", error.message);
-          }
-          console.log("No messages found. Make sure you are viewing a conversation with messages.");
+          chrome.runtime.sendMessage({
+            type: "error",
+            error:
+              "No messages found. Make sure you are viewing a conversation with messages.",
+          });
           return;
         }
 
@@ -2514,32 +2471,19 @@ function exportMessages(settings) {
 
         // Send completion message
         const exportStatus = wasStoppedByUser ? "stopped by user" : "completed automatically";
-        try {
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-            chrome.runtime.sendMessage({
-              type: "complete",
-              totalMessages: totalMessages,
-              filename: filename,
-              participants: ["YOU", getConversationPartnerName() || "OTHER PERSON"],
-              status: exportStatus,
-            });
-          }
-        } catch (error) {
-          console.log("Failed to send completion message:", error.message);
-        }
+        chrome.runtime.sendMessage({
+          type: "complete",
+          totalMessages: totalMessages,
+          filename: filename,
+          participants: ["YOU", getConversationPartnerName() || "OTHER PERSON"],
+          status: exportStatus,
+        });
 
       } catch (error) {
-        try {
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-            chrome.runtime.sendMessage({
-              type: "error",
-              error: error.message,
-            });
-          }
-        } catch (sendError) {
-          console.log("Failed to send error message:", sendError.message);
-        }
-        console.error("Export error:", error);
+        chrome.runtime.sendMessage({
+          type: "error",
+          error: error.message,
+        });
       }
     }
 

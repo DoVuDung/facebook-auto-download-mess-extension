@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Receiver - Facebook Messenger Export</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #1877f2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .messages {
+            height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafafa;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        .message-line {
+            margin: 3px 0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .date-header {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0 10px 0;
+            font-size: 16px;
+        }
+        .message-you {
+            background: #dcf8c6;
+            margin-left: 50px;
+            text-align: right;
+        }
+        .message-other {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            margin-right: 50px;
+        }
+        .header-info {
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-bottom: 2px solid #1877f2;
+            font-size: 12px;
+            color: #666;
+        }
+        .footer {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats {
+            font-size: 14px;
+            color: #666;
+        }
+        .export-btn {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .export-btn:hover {
+            background: #166fe5;
+        }
+        .export-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-waiting { background: #ffc107; }
+        .status-receiving { background: #28a745; animation: pulse 1s infinite; }
+        .status-complete { background: #17a2b8; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Facebook Messenger Export Receiver</h1>
+            <p>Real-time message streaming from Chrome Extension</p>
+        </div>
+        
+        <div class="messages" id="messages">
+            <div class="message-line header-info">
+                <span class="status-indicator status-waiting"></span>
+                Waiting for Chrome Extension to connect...
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="stats">
+                <span class="status-indicator" id="statusDot"></span>
+                <span id="messageCount">0</span> messages | 
+                <span id="status">Waiting for connection...</span>
+            </div>
+            <button class="export-btn" id="exportBtn" onclick="exportToFile()" disabled>
+                💾 Save to File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let messages = [];
+        let messageCount = 0;
+        let isReceiving = false;
+        let seenMessages = new Set(); // Track seen messages to prevent duplicates
+        
+        const messagesContainer = document.getElementById('messages');
+        const messageCountElement = document.getElementById('messageCount');
+        const statusElement = document.getElementById('status');
+        const statusDot = document.getElementById('statusDot');
+        const exportBtn = document.getElementById('exportBtn');
+
+        // Listen for messages from Chrome Extension
+        window.addEventListener('message', function(event) {
+            const messageText = event.data;
+            
+            if (typeof messageText === 'string' && messageText.trim()) {
+                if (!isReceiving) {
+                    isReceiving = true;
+                    updateStatus('receiving', 'Receiving messages...');
+                    clearWaitingMessage();
+                }
+                
+                addMessage(messageText);
+            }
+        });
+
+        function clearWaitingMessage() {
+            if (messageCount === 0) {
+                messagesContainer.innerHTML = '';
+            }
+        }
+
+        function addMessage(text) {
+            // Create a normalized version for duplicate detection
+            const normalizedText = text.toLowerCase().trim();
+            
+            // Skip if we've already seen this exact message
+            if (seenMessages.has(normalizedText)) {
+                console.log(`🔄 Duplicate detected, skipping: ${text.substring(0, 50)}...`);
+                return;
+            }
+            
+            // Add to seen messages set
+            seenMessages.add(normalizedText);
+            
+            // Add to messages array
+            messages.push(text);
+            messageCount++;
+            
+            // Update counters
+            messageCountElement.textContent = messageCount;
+            
+            // Create message element
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message-line';
+            
+            // Style different message types
+            if (text.startsWith('---') && text.endsWith('---')) {
+                messageElement.className += ' date-header';
+            } else if (text.startsWith('YOU:') || text.includes('YOU [')) {
+                messageElement.className += ' message-you';
+            } else if (text.includes(':') && !text.startsWith('Facebook') && !text.startsWith('Exported') && !text.startsWith('===')) {
+                messageElement.className += ' message-other';
+            } else if (text.startsWith('===') || text.startsWith('Facebook') || text.startsWith('Exported')) {
+                messageElement.className += ' header-info';
+            }
+            
+            messageElement.textContent = text;
+            messagesContainer.appendChild(messageElement);
+            
+            // Auto-scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Enable export button
+            if (messageCount > 1) {
+                exportBtn.disabled = false;
+            }
+            
+            // Log progress
+            if (messageCount % 25 === 0) {
+                console.log(`📦 Received ${messageCount} messages`);
+            }
+        }
+
+        function updateStatus(type, text) {
+            statusElement.textContent = text;
+            statusDot.className = `status-indicator status-${type}`;
+        }
+
+        function exportToFile() {
+            if (messages.length === 0) {
+                alert('No messages to export!');
+                return;
+            }
+
+            const content = messages.join('\n');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const filename = `messenger_export_${timestamp}.txt`;
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            updateStatus('complete', `Exported ${messageCount} messages to ${filename}`);
+        }
+
+        // Set initial status
+        updateStatus('waiting', 'Ready - waiting for extension...');
+        
+        // Handle page beforeunload
+        window.addEventListener('beforeunload', function() {
+            if (messageCount > 0 && !confirm(`You have ${messageCount} received messages. Are you sure you want to leave?`)) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

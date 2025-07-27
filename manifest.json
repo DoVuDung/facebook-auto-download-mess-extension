@@ -2,8 +2,11 @@
   "manifest_version": 3,
   "name": "Facebook Messenger Chat Exporter",
   "description": "Export Facebook Messenger conversations to text files with one click",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "permissions": ["scripting", "activeTab", "downloads", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Export Messenger Chat"

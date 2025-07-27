@@ -1,18 +1,16 @@
 let isExporting = false;
 let currentTab = null;
 
-// DOM elements
+// DOM elements - Updated interface
 const statusDiv = document.getElementById("status");
-const checkStatusBtn = document.getElementById("checkStatus");
 const startExportBtn = document.getElementById("startExport");
 const stopExportBtn = document.getElementById("stopExport");
-const progressDiv = document.getElementById("progress");
-const progressBar = document.getElementById("progressBar");
+const initialControls = document.getElementById("initialControls");
+const runningInterface = document.getElementById("runningInterface");
 
 // Settings
-const includeDatesCheckbox = document.getElementById("includeDates");
-const includeTimestampsCheckbox = document.getElementById("includeTimestamps");
-const clearDOMCheckbox = document.getElementById("clearDOM");
+const delayMinInput = document.getElementById("delayMin");
+const delayMaxInput = document.getElementById("delayMax");
 
 // Show status message
 function showStatus(message, type = "info") {
@@ -27,9 +25,73 @@ function showStatus(message, type = "info") {
   }
 }
 
-// Update progress
+// Switch to running interface
+function showRunningInterface() {
+  initialControls.classList.add("hidden");
+  runningInterface.classList.add("active");
+}
+
+// Switch back to initial interface
+function showInitialInterface() {
+  initialControls.classList.remove("hidden");
+  runningInterface.classList.remove("active");
+}
+
+// Update progress bar
 function updateProgress(percent) {
-  progressBar.style.width = `${percent}%`;
+  // Progress bar removed - no longer needed
+}
+
+// Update messages count
+function updateMessagesCount(count) {
+  // Message count removed - no longer needed
+}
+
+// Safe message sending with error handling
+function safeSendMessage(tabId, message, callback) {
+  try {
+    chrome.tabs.sendMessage(tabId, message, (response) => {
+      if (chrome.runtime.lastError) {
+        console.log("Message delivery failed:", chrome.runtime.lastError.message);
+        if (callback) callback(false, chrome.runtime.lastError);
+      } else {
+        console.log("Message sent successfully:", message.type);
+        if (callback) callback(true, response);
+      }
+    });
+  } catch (error) {
+    console.log("Could not send message:", error.message);
+    if (callback) callback(false, error);
+  }
+}
+
+// Check if content script is available
+async function checkContentScriptAvailable(tabId) {
+  return new Promise((resolve) => {
+    try {
+      chrome.tabs.sendMessage(tabId, { type: "ping" }, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    } catch (error) {
+      resolve(false);
+    }
+  });
+}
+
+// Check if background script is available
+async function checkBackgroundAvailable() {
+  try {
+    const check = await chrome.runtime.sendMessage({ action: 'ping' });
+    if (!check?.alive) throw new Error('Dead listener');
+    return true;
+  } catch (e) {
+    console.warn("🛑 Background not listening");
+    return false;
+  }
 }
 
 // Check if user is on Facebook Messenger
@@ -56,7 +118,7 @@ async function checkCurrentPage() {
       return false;
     }
 
-    showStatus("Ready to export messages!", "success");
+    showStatus("Ready to export!", "success");
     startExportBtn.disabled = false;
     return true;
   } catch (error) {
@@ -69,117 +131,106 @@ async function checkCurrentPage() {
 // Reset UI state
 function resetUI() {
   isExporting = false;
-  startExportBtn.style.display = "block";
+  showInitialInterface();
   startExportBtn.disabled = false;
-  stopExportBtn.style.display = "none";
-  progressDiv.style.display = "none";
-  updateProgress(0);
 }
 
 // Start export process
 async function startExport() {
   if (!currentTab || isExporting) return;
 
+  // Check if background script is available
+  const backgroundAvailable = await checkBackgroundAvailable();
+  if (!backgroundAvailable) {
+    showStatus("Extension background not responding. Try reloading the extension.", "error");
+    return;
+  }
+
   isExporting = true;
-  startExportBtn.style.display = "none";
-  stopExportBtn.style.display = "block";
-  progressDiv.style.display = "block";
-  showStatus("Starting export...", "info");
+  showRunningInterface();
+  showStatus("Starting background export...", "info");
 
   const settings = {
-    includeDates: includeDatesCheckbox.checked,
-    includeTimestamps: includeTimestampsCheckbox.checked,
-    clearDOM: clearDOMCheckbox.checked,
+    includeDates: true,
+    includeTimestamps: true,
+    clearDOM: true,
+    delayMin: parseInt(delayMinInput.value) || 1000,
+    delayMax: parseInt(delayMaxInput.value) || 5000,
   };
 
   try {
-    // Clear any existing duplicate tracking before starting
-    await chrome.scripting.executeScript({
-      target: { tabId: currentTab.id },
-      function: () => {
-        // Reset global duplicate tracking
-        if (window.contentHashSet) {
-          window.contentHashSet.clear();
-          console.log("🧹 Cleared duplicate tracking hash set");
-        }
-        if (window.processedElementIds) {
-          window.processedElementIds.clear();
-          console.log("🧹 Cleared processed element IDs");
-        }
-        console.log("🚀 Starting fresh export with clean duplicate tracking");
-      }
+    // Send start export message to background script
+    const response = await chrome.runtime.sendMessage({
+      action: 'startExport',
+      tabId: currentTab.id,
+      settings: settings
     });
 
-    await chrome.scripting.executeScript({
-      target: { tabId: currentTab.id },
-      function: exportMessages,
-      args: [settings],
-    });
+    if (response && response.success) {
+      showStatus("Export running in background. You can close this popup.", "success");
+    } else {
+      throw new Error("Failed to start background export");
+    }
+
   } catch (error) {
     showStatus("Export failed: " + error.message, "error");
+    console.error("Export error:", error);
     resetUI();
   }
 }
 
 // Stop export process
-function stopExport() {
-  if (isExporting) {
-    // Send stop message to content script
-    chrome.tabs.sendMessage(currentTab.id, { type: "stopScrolling" });
-    showStatus("Stopping and preparing export...", "info");
-  } else {
+async function stopExport() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'stopExport'
+    });
+
+    if (response && response.success) {
+      showStatus("Export stopped", "info");
+      isExporting = false;
+      resetUI();
+    } else {
+      throw new Error("Failed to stop export");
+    }
+  } catch (error) {
+    console.log("Could not send stop message:", error.message);
+    showStatus("Export stopped", "info");
     isExporting = false;
     resetUI();
-    showStatus("Export stopped", "info");
-  }
 }
 
-    // This function will be injected into the page
-function exportMessages(settings) {
-  return new Promise((resolve, reject) => {
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const messages = [];
-    let totalMessages = 0;
-    
-    // CLEAN INITIALIZATION: Reset all duplicate tracking
-    console.log("🧹 Initializing clean duplicate tracking...");
-    
-    // MAP-BASED progressive message collection with chronological ordering
-    const messageMap = new Map(); // Use Map to prevent duplicates and maintain order
-    const processedElementIds = new Set(); // Track processed DOM elements
-    let messageIndex = 0; // Global index for ordering
-    const dateOrder = new Map(); // Track date order for proper chronological sorting
-
-    // Reset global duplicate tracking variables
-    window.contentHashSet = new Set(); // Fresh hash set for this session
-    window.processedElementIds = new Set(); // Fresh element tracking
-    
-    console.log("✅ Clean state initialized");
-    console.log("Settings:", settings);
-
-    // Function to send one line at a time to local server API with error handling
-    function sendLineToLocalServer(text) {
-      fetch("http://127.0.0.1:3010/saveTxt.js?txt=" + encodeURIComponent(text))
-        .then((res) => res.text())
-        .then((response) => {
-          console.log("✅ API Response:", response);
-        })
-        .catch((err) => {
-          console.error("❌ Failed to save to API:", err);
-          // Don't throw error, just log it to avoid stopping the process
-        });
+// Event listeners
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🎯 Popup loaded");
+  
+  // Check current page
+  await checkCurrentPage();
+  
+  // Set up event listeners
+  startExportBtn.addEventListener("click", startExport);
+  stopExportBtn.addEventListener("click", stopExport);
+  
+  // Check if export is already running
+  try {
+    const status = await chrome.runtime.sendMessage({ action: 'getExportStatus' });
+    if (status && status.isRunning) {
+      isExporting = true;
+      showRunningInterface();
+      showStatus("Export running in background", "info");
     }
-
-    // Safe function to send progress updates with error handling
-    function safeUpdateProgress(percent, current, total, status) {
-      try {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({
-            type: "progress",
+  } catch (error) {
+    console.log("Could not check export status:", error);
+  }
+});
             percent: percent,
             current: current,
             total: total,
             status: status,
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.log("Progress update failed:", chrome.runtime.lastError.message);
+            }
           });
         }
       } catch (error) {
@@ -195,6 +246,11 @@ function exportMessages(settings) {
       } catch (error) {
         return false;
       }
+    }
+
+    // Get random scroll delay between min and max values
+    function getRandomScrollDelay(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     // Function to dismiss Facebook privacy popups and overlays
@@ -837,24 +893,33 @@ function exportMessages(settings) {
 
       // === ENHANCED SENDER IDENTIFICATION ===
       const rect = element.getBoundingClientRect();
-      const isRightAligned = rect.right > window.innerWidth * 0.55; // More lenient
-      const isLeftAligned = rect.left < window.innerWidth * 0.45; // More lenient
+      const windowWidth = window.innerWidth;
+      const centerPoint = windowWidth * 0.5;
+      
+      // More precise alignment detection for Facebook Messenger
+      const isRightAligned = rect.right > windowWidth * 0.75 || rect.left > centerPoint;
+      const isLeftAligned = rect.left < windowWidth * 0.25 || rect.right < centerPoint;
 
       let sender = "UNKNOWN";
       let foundExplicitSender = false;
 
-      // Method 1: Look for explicit sender name with MUCH broader acceptance
+      // Method 1: Look for explicit sender name in message bubbles
       const senderSelectors = [
-        'span[dir="auto"] strong', 
-        'h4', 
-        'h5', 
-        'span[role="text"]', 
-        'strong',
+        // Facebook Messenger specific selectors
+        '[data-testid="message_sender_name"]',
         '[aria-label*="sent by"]',
-        '[data-testid*="message-sender"]',
-        'div[dir="auto"] > span',
-        'span[dir="auto"]', // Broader span search
-        'div[dir="auto"]', // Direct div content
+        'div[role="row"] h4',
+        'div[role="row"] h5', 
+        'div[role="row"] strong',
+        'span[dir="auto"] strong',
+        '[data-testid*="sender"]',
+        
+        // Broader selectors as fallback
+        'strong:first-child',
+        'h4:first-child',
+        'h5:first-child',
+        'span[role="text"]:first-child',
+        'div[dir="auto"] > span:first-child',
       ];
       
       for (const selector of senderSelectors) {
@@ -862,23 +927,28 @@ function exportMessages(settings) {
         for (const senderEl of senderElements) {
           let senderText = senderEl.textContent?.trim();
           if (senderText) {
-            // Clean the sender text
-            senderText = senderText.replace(/\s*:.*$/g, "");
-            senderText = senderText.replace(/\s*\(.*?\)\s*/g, "");
-            senderText = senderText.replace(/\s*\[.*?\]\s*/g, "");
+            // Clean the sender text more thoroughly
+            senderText = senderText.replace(/\s*:.*$/g, ""); // Remove colon and everything after
+            senderText = senderText.replace(/\s*\(.*?\)\s*/g, ""); // Remove parentheses content
+            senderText = senderText.replace(/\s*\[.*?\]\s*/g, ""); // Remove brackets content
+            senderText = senderText.replace(/^\s*(said|says|wrote|sent)\s*/gi, ""); // Remove action words
+            senderText = senderText.replace(/\s*(said|says|wrote|sent)\s*$/gi, ""); // Remove trailing action words
             senderText = senderText.trim();
 
-            // More permissive validation - accept anything reasonable
+            // Enhanced validation - must be a reasonable name
             if (
               senderText &&
               senderText.length >= 1 &&
               senderText.length <= 50 &&
               !senderText.match(/^\d+$/) && // Not just numbers
               !senderText.match(/^\d{1,2}:\d{2}/) && // Not timestamp
-              !senderText.match(/AM|PM/i) &&
-              !senderText.includes("•") &&
-              !senderText.match(/^(Enter|SEND|SENT|EDITED|Delivered|Seen|Read)$/i) &&
-              senderText !== fullText // Not the entire message content
+              !senderText.match(/^(AM|PM)$/i) && // Not time indicator
+              !senderText.includes("•") && // Not bullet point
+              !senderText.match(/^(Enter|SEND|SENT|EDITED|Delivered|Seen|Read|Active|Online|Offline)$/i) && // Not UI text
+              !senderText.match(/^(Today|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i) && // Not day names
+              senderText !== fullText && // Not the entire message content
+              senderText.length < fullText.length * 0.8 && // Not most of the message content
+              !senderText.match(/^\d+\s+(minute|hour|day)s?\s+ago$/i) // Not "X minutes ago"
             ) {
               sender = senderText.toUpperCase();
               foundExplicitSender = true;
@@ -890,19 +960,56 @@ function exportMessages(settings) {
         if (foundExplicitSender) break;
       }
 
-      // Method 2: Enhanced position-based detection as fallback
+      // Method 2: Enhanced position-based detection with better accuracy
       if (!foundExplicitSender) {
-        if (isRightAligned) {
+        // Check message bubble alignment more precisely
+        const messageRect = rect;
+        const isDefinitelyRight = messageRect.left > windowWidth * 0.6;
+        const isDefinitelyLeft = messageRect.right < windowWidth * 0.4;
+        
+        // Also check for visual cues like background colors or styling
+        const computedStyle = window.getComputedStyle(element);
+        const hasRightAlignedStyling = computedStyle.textAlign === 'right' || 
+                                      computedStyle.marginLeft === 'auto' ||
+                                      computedStyle.justifyContent === 'flex-end';
+        
+        if (isDefinitelyRight || hasRightAlignedStyling) {
           sender = "YOU";
-        } else if (isLeftAligned) {
-          sender = conversationPartner
-            ? conversationPartner.toUpperCase()
-            : "OTHER PERSON";
+          console.log(`📍 Detected YOUR message (right-aligned: left=${messageRect.left}, width=${windowWidth})`);
+        } else if (isDefinitelyLeft) {
+          sender = conversationPartner ? conversationPartner.toUpperCase() : "OTHER PERSON";
+          console.log(`📍 Detected OTHER PERSON message (left-aligned: right=${messageRect.right}, width=${windowWidth})`);
         } else {
-          // Middle positioned - try to determine from content structure
-          sender = "UNKNOWN";
+          // Try to detect from parent container or message structure
+          const parentElement = element.parentElement;
+          if (parentElement) {
+            const parentRect = parentElement.getBoundingClientRect();
+            const parentIsRight = parentRect.left > windowWidth * 0.5;
+            const parentIsLeft = parentRect.right < windowWidth * 0.5;
+            
+            if (parentIsRight) {
+              sender = "YOU";
+              console.log(`📍 Detected YOUR message via parent positioning`);
+            } else if (parentIsLeft) {
+              sender = conversationPartner ? conversationPartner.toUpperCase() : "OTHER PERSON";
+              console.log(`📍 Detected OTHER PERSON message via parent positioning`);
+            } else {
+              // Last resort: check if this looks like a "you sent" message
+              if (fullText.toLowerCase().includes("you sent") || 
+                  fullText.toLowerCase().includes("you:") ||
+                  element.querySelector('[aria-label*="You sent"]')) {
+                sender = "YOU";
+                console.log(`📍 Detected YOUR message via content analysis`);
+              } else {
+                sender = conversationPartner ? conversationPartner.toUpperCase() : "OTHER PERSON";
+                console.log(`📍 Defaulting to OTHER PERSON (unclear positioning)`);
+              }
+            }
+          } else {
+            sender = "UNKNOWN";
+            console.log(`📍 Could not determine sender - no parent element`);
+          }
         }
-        console.log(`📍 Using position-based sender detection: ${sender} (right: ${isRightAligned}, left: ${isLeftAligned})`);
       }
 
       // === EXTRACT TIMESTAMP FOR ORDERING ===
@@ -1061,6 +1168,15 @@ function exportMessages(settings) {
 
       console.log(`✅ Accepted message from ${sender}: "${cleanContent.substring(0, 100)}${cleanContent.length > 100 ? '...' : ''}" (${cleanContent.length} chars)`);
 
+      // Debug sender detection for troubleshooting
+      if (sender === "UNKNOWN") {
+        console.warn(`⚠️ UNKNOWN SENDER DETECTED:`);
+        console.warn(`  - Element text: "${fullText.substring(0, 200)}..."`);
+        console.warn(`  - Element position: left=${rect.left}, right=${rect.right}, width=${window.innerWidth}`);
+        console.warn(`  - Alignment: isRight=${rect.right > window.innerWidth * 0.75}, isLeft=${rect.left < window.innerWidth * 0.25}`);
+        console.warn(`  - Conversation partner: "${conversationPartner}"`);
+      }
+
       return {
         type: "message",
         index: index,
@@ -1073,122 +1189,196 @@ function exportMessages(settings) {
 
     // Enhanced helper to get conversation partner name with better accuracy
     function getConversationPartnerName() {
-      // Priority 1: Look for conversation header/title
+      console.log("🔍 Starting conversation partner detection...");
+      
+      // Priority 1: Look for conversation header/title with enhanced selectors
       const headerSelectors = [
-        'h1[dir="auto"]',
+        // Facebook Messenger specific selectors
         '[data-testid="conversation_name"]',
+        '[data-testid="conversation-header"] h1',
+        '[data-testid="conversation-header"] span[dir="auto"]',
         '[aria-label*="Conversation with"] h1',
+        '[aria-label*="Conversation with"] span',
+        
+        // General header selectors
+        'h1[dir="auto"]',
         'div[role="banner"] h1',
-        "header h1 span",
         'div[role="banner"] span[dir="auto"]',
+        'header h1',
+        'header h1 span',
+        'header span[dir="auto"]',
+        
+        // Broader search
+        '[role="banner"] h1',
+        '[role="banner"] [dir="auto"]',
+        'main h1[dir="auto"]',
+        '[role="main"] h1',
       ];
 
       for (const selector of headerSelectors) {
-        const el = document.querySelector(selector);
-        if (el && el.textContent.trim()) {
-          let name = el.textContent.trim();
+        const elements = document.querySelectorAll(selector);
+        for (const el of elements) {
+          if (el && el.textContent?.trim()) {
+            let name = el.textContent.trim();
+            console.log(`🔍 Found potential name from ${selector}: "${name}"`);
 
-          // Clean up the name - remove common UI text
-          name = name.replace(/\s*\(.*?\)\s*/g, ""); // Remove parentheses content
-          name = name.replace(/\s*-\s*Messenger.*$/i, ""); // Remove "- Messenger" suffix
-          name = name.replace(/\s*•.*$/g, ""); // Remove bullet points and after
-          name = name.trim();
+            // Clean up the name - remove common UI text
+            name = name.replace(/\s*\(.*?\)\s*/g, ""); // Remove parentheses content
+            name = name.replace(/\s*-\s*Messenger.*$/i, ""); // Remove "- Messenger" suffix
+            name = name.replace(/\s*•.*$/g, ""); // Remove bullet points and after
+            name = name.replace(/\s*-\s*Facebook.*$/i, ""); // Remove "- Facebook" suffix
+            name = name.replace(/\s*\|\s*.*$/g, ""); // Remove pipe and after
+            name = name.trim();
 
-          // Validate name - must be reasonable length and not UI text
-          if (
-            name &&
-            name.length > 0 &&
-            name.length < 100 &&
-            !name.toLowerCase().includes("messenger") &&
-            !name.toLowerCase().includes("facebook") &&
-            !name.toLowerCase().includes("chat") &&
-            !name.toLowerCase().includes("active") &&
-            !name.toLowerCase().includes("online") &&
-            !name.match(/^\d+$/) &&
-            !name.includes("•") &&
-            name !== "Messages"
-          ) {
-            return name;
+            // Enhanced validation - must be reasonable length and not UI text
+            if (
+              name &&
+              name.length > 0 &&
+              name.length < 100 &&
+              !name.toLowerCase().includes("messenger") &&
+              !name.toLowerCase().includes("facebook") &&
+              !name.toLowerCase().includes("chat") &&
+              !name.toLowerCase().includes("conversation") &&
+              !name.toLowerCase().includes("active") &&
+              !name.toLowerCase().includes("online") &&
+              !name.toLowerCase().includes("offline") &&
+              !name.match(/^\d+$/) && // Not just numbers
+              !name.includes("•") &&
+              !name.match(/^\d+\s+(minute|hour|day)s?\s+ago$/i) && // Not time ago
+              name !== "Messages" &&
+              name !== "Home" &&
+              name !== "Settings" &&
+              name.length >= 2 // At least 2 characters
+            ) {
+              console.log(`✅ Selected conversation partner from header: "${name}"`);
+              return name;
+            } else {
+              console.log(`❌ Rejected header name: "${name}" (failed validation)`);
+            }
           }
         }
       }
 
       // Priority 2: Look for profile link or avatar with name
       const profileSelectors = [
+        // Facebook specific profile selectors
+        '[data-testid*="profile"] span[dir="auto"]',
         '[role="button"][aria-label*="profile"] span',
+        '[role="button"][aria-label*="Profile"] span',
         'a[href*="/profile/"] span',
-        '[data-testid*="profile"] span',
+        'a[href*="/user/"] span',
+        '[data-testid*="profile-link"] span',
+        
+        // Avatar or profile picture selectors
+        'img[aria-label] + span',
+        '[role="img"] + span',
+        '[data-testid="profile_pic"] + span',
       ];
 
       for (const selector of profileSelectors) {
-        const el = document.querySelector(selector);
-        if (el && el.textContent.trim()) {
-          const name = el.textContent.trim();
-          if (name && name.length > 0 && name.length < 50) {
-            return name;
+        const elements = document.querySelectorAll(selector);
+        for (const el of elements) {
+          if (el && el.textContent?.trim()) {
+            let name = el.textContent.trim();
+            console.log(`🔍 Found potential name from profile: "${name}"`);
+            
+            // Clean and validate
+            name = name.replace(/\s*\(.*?\)\s*/g, "");
+            name = name.trim();
+            
+            if (name && name.length > 0 && name.length < 50 && !name.match(/^\d+$/)) {
+              console.log(`✅ Selected conversation partner from profile: "${name}"`);
+              return name;
+            }
           }
         }
       }
 
       // Priority 3: Analyze message senders to find the other person
-      const messageElements = document.querySelectorAll('div[role="row"]');
+      console.log("🔍 Analyzing message senders to find conversation partner...");
+      const messageElements = document.querySelectorAll('div[role="row"], [data-testid*="message"]');
       const senderCounts = {};
       const currentUserIdentifiers = ["you", "me", "myself"];
 
+      let analyzedMessages = 0;
       for (const msgEl of messageElements) {
-        // Look for sender name elements
+        if (analyzedMessages > 100) break; // Limit analysis for performance
+        
+        // Look for sender name elements with enhanced selectors
         const senderElements = msgEl.querySelectorAll(
-          'span[dir="auto"] strong, h4, h5, [aria-label*="sent by"]'
+          'span[dir="auto"] strong, h4, h5, [aria-label*="sent by"], [data-testid*="sender"], strong:first-child'
         );
 
         for (const senderEl of senderElements) {
           let senderText = senderEl.textContent?.trim();
           if (senderText) {
-            // Clean sender name
+            // Clean sender name more thoroughly
             senderText = senderText.replace(/\s*:.*$/g, ""); // Remove colon and after
             senderText = senderText.replace(/\s*\(.*?\)\s*/g, ""); // Remove parentheses
+            senderText = senderText.replace(/^\s*(said|says|wrote|sent)\s*/gi, ""); // Remove action words
             senderText = senderText.trim();
 
-            // Validate sender name
+            // Enhanced validation for sender names
             if (
               senderText &&
               senderText.length > 0 &&
               senderText.length < 50 &&
-              !senderText.match(/^\d+$/) &&
-              !senderText.match(/AM|PM/i) &&
-              !senderText.includes("Active") &&
-              !senderText.includes("ago") &&
-              !senderText.includes("•") &&
+              !senderText.match(/^\d+$/) && // Not just numbers
+              !senderText.match(/^\d{1,2}:\d{2}/) && // Not timestamp
+              !senderText.match(/AM|PM/i) && // Not time
+              !senderText.match(/^(Active|Online|Offline|ago)$/i) && // Not status
+              !senderText.includes("•") && // Not bullet
+              !senderText.match(/^(Enter|SEND|SENT|EDITED|Delivered|Seen|Read)$/i) && // Not UI
+              !senderText.match(/^(Today|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i) && // Not days
               !currentUserIdentifiers.some((id) =>
                 senderText.toLowerCase().includes(id)
-              )
+              ) && // Not current user
+              senderText.length >= 2 // At least 2 characters
             ) {
               senderCounts[senderText] = (senderCounts[senderText] || 0) + 1;
+              console.log(`📊 Found sender: "${senderText}" (count: ${senderCounts[senderText]})`);
             }
           }
         }
+        analyzedMessages++;
       }
 
       // Find the most frequent sender (excluding current user)
       let bestSender = null;
       let maxCount = 0;
 
+      console.log("📊 Sender analysis results:");
       for (const [sender, count] of Object.entries(senderCounts)) {
-        if (count > maxCount && count > 2) {
-          // Must appear at least 3 times
+        console.log(`  - ${sender}: ${count} messages`);
+        if (count > maxCount && count >= 2) { // Reduced from 3 to 2 for smaller conversations
           bestSender = sender;
           maxCount = count;
         }
       }
 
-      if (bestSender) {
+      if (bestSender && maxCount >= 2) {
         console.log(
-          `Found conversation partner by message analysis: ${bestSender} (${maxCount} messages)`
+          `✅ Selected conversation partner by message analysis: "${bestSender}" (${maxCount} messages)`
         );
         return bestSender;
       }
 
-      console.log("Could not determine conversation partner name");
+      // Priority 4: Try URL analysis for conversation ID/name
+      const currentUrl = window.location.href;
+      const urlMatch = currentUrl.match(/\/t\/([^\/\?]+)/);
+      if (urlMatch && urlMatch[1]) {
+        const urlId = decodeURIComponent(urlMatch[1]);
+        // Check if it looks like a name rather than an ID
+        if (urlId.length < 50 && !urlId.match(/^\d+$/) && urlId.includes('.')) {
+          const possibleName = urlId.split('.').pop();
+          if (possibleName && possibleName.length > 1) {
+            console.log(`✅ Found possible name from URL: "${possibleName}"`);
+            return possibleName;
+          }
+        }
+      }
+
+      console.log("❌ Could not determine conversation partner name through any method");
       return null;
     }
 
@@ -1385,6 +1575,9 @@ function exportMessages(settings) {
         if (message.type === "stopScrolling") {
           userRequestedStop = true;
           safeUpdateProgress(90, currentMessageCount, currentMessageCount, "User stopped - preparing export...");
+        } else if (message.type === "ping") {
+          // Respond to ping requests to check if content script is alive
+          sendResponse({ alive: true });
         }
       };
       
@@ -1866,21 +2059,28 @@ function exportMessages(settings) {
           }
         }
 
-        // ADAPTIVE wait time based on current strategy and performance
-        await sleep(waitTime);
+        // ADAPTIVE wait time with random delay for human-like behavior
+        const randomDelay = getRandomScrollDelay(settings.delayMin, settings.delayMax);
+        console.log(`⏰ Random scroll delay: ${randomDelay}ms (${settings.delayMin}-${settings.delayMax}ms range)`);
+        await sleep(randomDelay);
 
         // ADDITIONAL: Extra wait for potential lazy loading after initial scroll methods
         if (aggressionLevel >= 3 && currentMessageCount > 500) {
           // Additional patience for large conversations that might have lazy loading
-          const extraLazyWait = Math.min(
+          const baseExtraWait = Math.min(
             currentMessageCount > 5000 ? 1500 : 
             currentMessageCount > 2000 ? 1200 : 
             currentMessageCount > 1000 ? 1000 : 500,
             2000 // Cap at 2 seconds
           );
           
-          console.log(`⏳ Extra lazy loading wait: ${extraLazyWait}ms for potential delayed messages...`);
-          await sleep(extraLazyWait);
+          // Add randomness to extra wait as well
+          const extraRandomDelay = getRandomScrollDelay(
+            Math.floor(baseExtraWait * 0.5), 
+            Math.floor(baseExtraWait * 1.5)
+          );
+          console.log(`⏳ Extra lazy loading wait: ${extraRandomDelay}ms for potential delayed messages...`);
+          await sleep(extraRandomDelay);
         }
 
         // PROGRESSIVE MAP-BASED extraction: Save current view to Map
@@ -1927,7 +2127,13 @@ function exportMessages(settings) {
             lazyLoadWaitTime = 2000; // 2 seconds for smaller conversations
           }
           
-          console.log(`⏳ Facebook lazy loading detected, waiting ${lazyLoadWaitTime}ms for messages to load...`);
+          // Add randomness to lazy loading wait time too
+          const randomLazyDelay = getRandomScrollDelay(
+            Math.floor(lazyLoadWaitTime * 0.8), 
+            Math.floor(lazyLoadWaitTime * 1.2)
+          );
+          
+          console.log(`⏳ Facebook lazy loading detected, waiting ${randomLazyDelay}ms for messages to load...`);
           
           // Update progress to show lazy loading wait
           safeUpdateProgress(
@@ -1937,7 +2143,7 @@ function exportMessages(settings) {
             `Waiting for Facebook to load more messages... (${currentMessageCount} found)`
           );
           
-          await sleep(lazyLoadWaitTime);
+          await sleep(randomLazyDelay);
           
           // After waiting, extract again to catch newly loaded messages
           const lazyLoadSave = extractAndSaveMessagesToMap(false);
@@ -2571,32 +2777,51 @@ function exportMessages(settings) {
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "progress") {
-    updateProgress(message.percent);
-    const statusText = message.status || `Processing conversation - ${
-      message.current || message.total || 0
-    } messages found`;
-    showStatus(statusText, "info");
-  } else if (message.type === "complete") {
-    const filename = message.filename || "messenger_chat.txt";
-    const participants = message.participants
-      ? message.participants.join(" and ")
-      : "both participants";
+  try {
+    if (message.type === "progress") {
+      // Update progress bar
+      if (message.percent !== undefined) {
+        updateProgress(message.percent);
+      }
+      
+      // Update messages count
+      if (message.current !== undefined) {
+        updateMessagesCount(message.current);
+      }
+      
+      // Update status text
+      const statusText = message.status || `Processing conversation - ${
+        message.current || message.total || 0
+      } messages found`;
+      showStatus(statusText, "info");
+    } else if (message.type === "complete") {
+      const filename = message.filename || "messenger_chat.txt";
+      const participants = message.participants
+        ? message.participants.join(" and ")
+        : "both participants";
+      
+      const exportStatus = message.status === "stopped by user" 
+        ? `Stopped! ${message.totalMessages} messages from ${participants} saved to ${filename}`
+        : `Complete! ${message.totalMessages} text messages from ${participants} saved to ${filename}`;
+      
+      showStatus(exportStatus, "success");
+      resetUI();
+    } else if (message.type === "error") {
+      showStatus(`Error: ${message.error}`, "error");
+      resetUI();
+    }
     
-    const exportStatus = message.status === "stopped by user" 
-      ? `Stopped! ${message.totalMessages} messages from ${participants} saved to ${filename}`
-      : `Complete! ${message.totalMessages} text messages from ${participants} saved to ${filename}`;
-    
-    showStatus(exportStatus, "success");
-    resetUI();
-  } else if (message.type === "error") {
-    showStatus(`Error: ${message.error}`, "error");
-    resetUI();
+    // Send response to avoid connection errors
+    sendResponse({ received: true });
+  } catch (error) {
+    console.log("Error handling message:", error);
+    sendResponse({ error: error.message });
   }
+  
+  return true; // Keep channel open for async response
 });
 
-// Event listeners
-checkStatusBtn.addEventListener("click", checkCurrentPage);
+// Event listeners  
 startExportBtn.addEventListener("click", startExport);
 stopExportBtn.addEventListener("click", stopExport);
 
